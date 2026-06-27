@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Octave · GTM Accountability Workshop — Winning by Design</title>
+<!--
+  Octave GTM Accountability Workshop — single-file, offline, no build step.
+  Double-click to open, screen-share, and facilitate live. State persists in localStorage.
+
+  FONTS: This file uses a 'DM Sans' -> 'Open Sans' -> system font stack. To stay 100% offline
+  no web fonts are fetched. If DM Sans / Open Sans are installed on the machine they are used
+  automatically; otherwise the system UI font is used. To hard-embed DM Sans, paste a
+  base64 @font-face block into the <style> below — nothing else needs to change.
+
+  LOGOS: Both the Winning by Design and Octave marks are inline SVG (offline). Swap them for
+  the official artwork by replacing the <svg> blocks tagged LOGO-WBD / LOGO-OCTAVE.
+-->
+<style>
+  :root{
+    --ink:#1B1B1B;            /* near-black banner */
+    --deep:#020D17;           /* WbD deep blue */
+    --cyan:#1FA7D2;           /* accent (brand fill) */
+    --cyan-text:#0E6E92;      /* AA-safe cyan for text on light surfaces */
+    --panel:#F2F5F7;          /* light content */
+    --muted:#9AA7B4;          /* decorative muted (borders, switch track) */
+    --muted-text:#5E6A77;     /* AA-safe muted for informational text */
+    --amber:#E0A23C;          /* friction / flag (brand fill) */
+    --amber-text:#7a5410;     /* AA-safe amber for text */
+    --green:#2E9E6B;          /* agreed (brand fill) */
+    --red:#D0454A;            /* flag-red (brand fill) */
+    --white:#ffffff;
+    --line:#D7DEE5;
+    --card:#ffffff;
+    --shadow:0 1px 2px rgba(2,13,23,.06), 0 4px 16px rgba(2,13,23,.06);
+    --radius:10px;
+    --font:"DM Sans","Open Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--font);
+    color:var(--ink);
+    background:var(--panel);
+    font-size:16px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit}
+  :focus-visible{outline:3px solid var(--cyan);outline-offset:2px;border-radius:4px}
+
+  /* ===== Sticky top chrome ===== */
+  .topbar{position:sticky;top:0;z-index:40}
+
+  /* Banner — persistent, never scrolls away */
+  .banner{
+    background:var(--ink);
+    color:var(--white);
+    display:flex;align-items:center;justify-content:space-between;
+    gap:24px;padding:10px 22px;
+  }
+  .banner .slogan{
+    flex:1;text-align:center;
+    color:var(--cyan);
+    font-weight:800;
+    letter-spacing:.42em;
+    font-size:clamp(13px,1.5vw,20px);
+    text-transform:uppercase;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    padding-left:.42em; /* optical: balance the letter-spacing */
+  }
+  .brand{display:flex;align-items:center;gap:10px;min-width:150px}
+  .brand.right{justify-content:flex-end}
+  .brand svg{display:block;height:30px;width:auto}
+  .brand .lab{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.72);font-weight:600;white-space:nowrap}
+
+  /* Tabs */
+  nav.tabs{background:var(--deep);display:flex;gap:2px;padding:0 14px;overflow-x:auto}
+  nav.tabs button{
+    appearance:none;border:0;background:transparent;color:rgba(255,255,255,.62);
+    font-size:15px;font-weight:600;letter-spacing:.02em;
+    padding:14px 18px;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;
+  }
+  nav.tabs button .step{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:20px;height:20px;border-radius:50%;font-size:12px;font-weight:700;
+    background:rgba(255,255,255,.14);margin-right:8px;
+  }
+  nav.tabs button:hover{color:#fff;background:rgba(255,255,255,.05)}
+  nav.tabs button.active{color:#fff;border-bottom-color:var(--cyan)}
+  nav.tabs button.active .step{background:var(--cyan);color:var(--deep)}
+
+  /* Toolbar */
+  .toolbar{
+    background:#fff;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:10px 22px;
+  }
+  .toolbar .grow{flex:1}
+  .btn{
+    appearance:none;border:1px solid var(--line);background:#fff;color:var(--ink);
+    font-size:14px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;
+  }
+  .btn:hover{border-color:var(--cyan);color:var(--deep)}
+  .btn.primary{background:var(--cyan);border-color:var(--cyan);color:var(--deep)}
+  .btn.primary:hover{background:#1893bb;border-color:#1893bb;color:var(--deep)}
+  .btn.ghost{border-color:transparent;background:transparent}
+  .btn.danger:hover{border-color:var(--red);color:var(--red)}
+  .btn[disabled]{opacity:.4;cursor:not-allowed}
+  .btn .ic{font-size:15px;line-height:1}
+
+  .conn{font-size:12.5px;font-weight:700;letter-spacing:.02em;padding:5px 11px;border-radius:20px;white-space:nowrap}
+  .conn:empty{display:none}
+  .conn.live{color:#1F7A50;background:rgba(46,158,107,.12)}
+  .conn.wait{color:var(--muted-text);background:rgba(2,13,23,.05)}
+  .conn.off{color:var(--amber-text);background:rgba(224,162,60,.14)}
+
+  .switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--deep);cursor:pointer;user-select:none}
+  .switch input{position:absolute;opacity:0;width:0;height:0}
+  .track{width:40px;height:22px;border-radius:22px;background:var(--muted);position:relative;transition:background .15s;flex:0 0 auto}
+  .track::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;border:1px solid var(--deep);transition:transform .15s}
+  .switch input:checked + .track{background:var(--cyan)}
+  .switch input:checked + .track::after{transform:translateX(18px)}
+  .switch input:focus-visible + .track{outline:3px solid var(--cyan);outline-offset:2px}
+
+  /* ===== Main ===== */
+  main{padding:24px 22px 80px;max-width:1680px;margin:0 auto}
+  .vhead{margin-bottom:18px}
+  .vhead h1{font-size:26px;margin:0 0 4px;font-weight:800;letter-spacing:-.01em}
+  .vhead p{margin:0;color:#4c5965;font-size:16px;max-width:90ch}
+  .vtools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:14px 0 6px}
+
+  /* Hint */
+  .hint{
+    background:#fff;border:1px solid var(--line);border-left:4px solid var(--cyan);
+    border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;box-shadow:var(--shadow);
+    font-size:14.5px;color:#44515d;display:flex;gap:14px;align-items:flex-start;
+  }
+  .hint b{color:var(--deep)}
+  .hint .x{margin-left:auto}
+  .hint kbd{font:inherit;font-size:12px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+
+  /* ===== Editable text ===== */
+  .ed{
+    cursor:text;border-radius:4px;padding:1px 3px;margin:-1px -3px;
+    transition:background .12s, box-shadow .12s;outline:none;display:inline;
+  }
+  .ed:hover{background:rgba(31,167,210,.10);box-shadow:inset 0 -2px 0 rgba(31,167,210,.45)}
+  .ed:focus{background:#fff;box-shadow:0 0 0 2px var(--cyan)}
+  .ed:empty::before{content:"—";color:var(--muted-text)}
+
+  .mini{
+    appearance:none;border:0;background:transparent;cursor:pointer;color:var(--muted-text);
+    font-size:13px;line-height:1;padding:3px;border-radius:5px;
+  }
+  .mini:hover{color:var(--deep);background:rgba(2,13,23,.06)}
+  .mini.del:hover{color:var(--red);background:rgba(208,69,74,.10)}
+  .pal{font-size:14px}
+
+  /* Dot toggle (flag: discuss this) */
+  .dot{
+    appearance:none;cursor:pointer;background:transparent;
+    width:22px;height:22px;border-radius:50%;border:2px solid var(--muted);
+    display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+    transition:all .12s;padding:0;
+  }
+  .dot:hover{border-color:var(--amber);background:rgba(224,162,60,.14)}
+  .dot.on{background:var(--amber);border-color:var(--amber);box-shadow:0 0 0 3px rgba(224,162,60,.22)}
+  .dot.on.green{background:var(--green);border-color:var(--green);box-shadow:0 0 0 3px rgba(46,158,107,.22)}
+  .dot.on::after{content:"";width:7px;height:7px;border-radius:50%;background:#fff}
+
+  /* ===== Definitions / Best practice list ===== */
+  .arealist{display:flex;flex-direction:column;gap:10px}
+  .arow{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:14px 16px;display:grid;
+    grid-template-columns:42px 1fr 230px 86px;gap:16px;align-items:start;
+  }
+  .arow.nodefacc{grid-template-columns:42px 1fr 86px}
+  .arow.friction{border-left:4px solid var(--amber)}
+  .arow .num{font-weight:800;color:var(--muted-text);font-size:18px;text-align:center;padding-top:1px}
+  .arow .aname{font-weight:700;font-size:17px;color:var(--deep);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .arow .adef{color:#3f4b57;font-size:16px;margin-top:5px}
+  .arow .acc{font-size:16px}
+  .acc .lab{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-text);font-weight:700;margin-bottom:3px}
+  .acc .who{font-weight:700;color:var(--cyan-text);font-size:16px}
+  .arow .rowtools{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+  .flag{
+    display:inline-flex;align-items:center;gap:5px;background:rgba(224,162,60,.16);color:var(--amber-text);
+    font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    padding:3px 8px;border-radius:20px;white-space:nowrap;
+  }
+  .flag::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber)}
+  .hidden-acc{color:var(--muted);font-style:italic;font-size:13px}
+
+  /* ===== WbD Best Practice (step 1) — 3-column reveal table ===== */
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);background:#fff}
+  table.deftable{border-collapse:separate;border-spacing:0;width:100%;min-width:760px}
+  table.deftable thead th{background:var(--deep);color:#fff;text-align:left;font-size:14px;font-weight:700;letter-spacing:.04em;padding:14px 18px}
+  table.deftable tbody td{border-top:1px solid var(--line);padding:14px 18px;vertical-align:top;font-size:16px}
+  table.deftable tbody tr:first-child td{border-top:0}
+  table.deftable tbody tr:hover td{background:#fbfdfe}
+  .deftable .c1in{display:flex;align-items:flex-start;gap:8px}
+  .deftable .c1in .ed{flex:1;font-weight:700;color:var(--deep)}
+  .deftable .rowdel{opacity:0;transition:opacity .12s;flex:0 0 auto}
+  .deftable tr:hover .rowdel,.deftable .rowdel:focus-visible{opacity:1}
+  .deftable .creveal .ed{color:#3f4b57}
+  .deftable .cacc .ed{font-weight:700;color:var(--cyan)}
+  .masked{display:inline-block;width:74%;min-width:120px;height:16px;border-radius:8px;background:#e3e9ee;vertical-align:middle}
+
+  /* team-view flag buttons + notes */
+  .deftable td.flagcell{white-space:nowrap}
+  .flagbtn{appearance:none;border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:6px 13px;font-size:13px;font-weight:700;cursor:pointer;margin:0 6px 4px 0;transition:all .12s}
+  .flagbtn.green{color:#1F7A50;border-color:#bfe0cd}
+  .flagbtn.amber{color:var(--amber-text);border-color:#f0d9b0}
+  .flagbtn.green:hover{border-color:#1F7A50}
+  .flagbtn.amber:hover{border-color:var(--amber)}
+  .flagbtn.green[aria-pressed="true"]{background:#1F7A50;border-color:#1F7A50;color:#fff}
+  .flagbtn.amber[aria-pressed="true"]{background:var(--amber);border-color:var(--amber);color:var(--deep)}
+  .deftable td.notecell .ed{display:block;min-height:22px;color:#3f4b57}
+  .deftable td.notecell .ed:empty::before{content:"Add a note…";color:var(--muted-text)}
+
+  /* ===== Team view ===== */
+  .teamswitch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .teamswitch button{
+    appearance:none;border:1px solid var(--line);background:#fff;border-radius:22px;
+    padding:8px 16px;font-size:14.5px;font-weight:700;cursor:pointer;color:#56636f;
+  }
+  .teamswitch button:hover{border-color:var(--cyan);color:var(--deep)}
+  .teamswitch button.active{background:var(--deep);border-color:var(--deep);color:#fff}
+  .teamswitch button.active .n{color:var(--cyan)}
+  .teamswitch button .n{margin-left:6px;color:var(--muted-text);font-weight:800}
+
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;color:#56636f;margin:4px 0 12px}
+  .legend .li{display:flex;align-items:center;gap:7px}
+  .legend .swatch{width:14px;height:14px;border-radius:50%;flex:0 0 auto}
+
+  .trow{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:13px 16px;display:grid;
+    grid-template-columns:54px 1fr 220px;gap:16px;align-items:center;margin-bottom:9px;
+    transition:opacity .15s, filter .15s;
+  }
+  .trow.mine{border-left:4px solid var(--cyan);background:#fbfdfe}
+  /* Dampen via a tint + muted (but AA-legible) text — never via opacity, which destroys contrast */
+  .trow.dim{background:#f4f7f9;border-color:#e3e9ee}
+  .trow.dim .tn{color:#4c5965}
+  .trow.dim .tdef{color:#4c5965}
+  .trow.dim .tacc .who{color:var(--muted-text)}
+  .trow.dim .mineflag{filter:none}
+  .trow.dim:hover,.trow.dim:focus-within{background:#fff;border-color:var(--line)}
+  .trow.dim:hover .tn,.trow.dim:focus-within .tn{color:var(--deep)}
+  .trow.dim:hover .tacc .who,.trow.dim:focus-within .tacc .who{color:var(--cyan-text)}
+  .trow .tn{font-weight:700;font-size:16.5px;color:var(--deep)}
+  .trow.mine .tn{font-size:17px}
+  .trow .tdef{font-size:16px;color:#4c5965;margin-top:3px}
+  .trow .tacc{font-size:16px;text-align:right}
+  .trow .tacc .who{font-weight:700;color:var(--cyan-text)}
+  .trow .mineflag{display:inline-block;background:var(--cyan);color:var(--deep);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
+  .trow .dotwrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .trow .dotwrap small{font-size:10px;color:var(--muted-text);font-weight:700;letter-spacing:.04em}
+
+  /* ===== Master matrix ===== */
+  .matrix-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);background:#fff}
+  table.matrix{border-collapse:separate;border-spacing:0;width:100%;min-width:980px}
+  table.matrix th,table.matrix td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:10px 12px;vertical-align:top}
+  table.matrix thead th{position:sticky;top:0;background:var(--deep);color:#fff;font-size:13.5px;font-weight:700;z-index:2;border-bottom:0}
+  table.matrix thead th.corner{text-align:left;border-top-left-radius:var(--radius)}
+  table.matrix thead th.thteam{text-align:center;min-width:122px}
+  table.matrix thead th.thteam .ed{color:#fff}
+  table.matrix thead th.thteam .ed:hover{background:rgba(255,255,255,.16);box-shadow:none}
+  table.matrix thead th.addcol{width:46px;text-align:center}
+  table.matrix thead th.addcol .mini{color:rgba(255,255,255,.8)}
+  table.matrix thead th.addcol .mini:hover{color:#fff;background:rgba(255,255,255,.16)}
+  table.matrix tbody th.tharea{text-align:left;background:#fafcfd;min-width:300px;max-width:360px;position:sticky;left:0;z-index:1}
+  .tharea .num{display:inline-block;width:22px;color:var(--muted-text);font-weight:800}
+  .tharea .areaname{font-weight:700;color:var(--deep);font-size:16px}
+  .tharea .accnote{font-size:14px;color:#4c5965;margin-top:5px}
+  .tharea .accnote .who{font-weight:700;color:var(--cyan-text)}
+  .tharea.friction{border-left:4px solid var(--amber)}
+
+  td.mcell{text-align:center;position:relative;background:#fff;min-width:122px}
+  td.mcell.acc{background:rgba(31,167,210,.09)}
+  td.mcell.flagged{background:rgba(224,162,60,.12)}
+  td.mcell.agreed{background:rgba(46,158,107,.12)}
+  td.mcell.acc.flagged{background:linear-gradient(135deg,rgba(31,167,210,.12),rgba(224,162,60,.16))}
+  .mcellinner{display:flex;flex-direction:column;align-items:center;gap:7px;min-height:42px;justify-content:center}
+  .accpill{display:inline-flex;align-items:center;gap:5px;background:var(--cyan);color:var(--deep);font-size:11px;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:20px}
+  .accpill.txt{background:transparent;color:var(--cyan-text);padding:0;font-size:13px;font-weight:800}
+  .setacc{
+    appearance:none;border:1px dashed var(--line);background:transparent;color:var(--muted-text);
+    font-size:11px;font-weight:700;padding:3px 8px;border-radius:14px;cursor:pointer;opacity:0;transition:opacity .12s;
+  }
+  /* reveal on hover AND on keyboard focus so it's reachable without a mouse */
+  td.mcell:hover .setacc,td.mcell:focus-within .setacc,.setacc:focus-visible{opacity:1}
+  .setacc:hover{border-color:var(--cyan);border-style:solid;color:var(--cyan-text);background:rgba(31,167,210,.08)}
+  td.addcol-cell{background:#fafcfd}
+
+  /* ===== What's next ===== */
+  .nextlist{display:flex;flex-direction:column;gap:10px}
+  .nrow{
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:14px 16px;display:grid;grid-template-columns:46px 1.4fr 1fr 1fr 150px;gap:14px;align-items:center;
+  }
+  .nrow.head{background:var(--deep);color:#fff;box-shadow:none;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;position:sticky;top:0;z-index:1}
+  .nrow.head .col{color:rgba(255,255,255,.85)}
+  /* What's Next: blank Area + Notes (+ slim action column) */
+  .nrow.head4,.nrow.nrow4{grid-template-columns:1.1fr 1.7fr 1fr 150px 40px}
+  .nrow .nrowact{display:flex;align-items:center;justify-content:center}
+  .nrow4 .nrowact .mini{opacity:0;transition:opacity .12s}
+  .nrow4:hover .nrowact .mini,.nrow4 .nrowact .mini:focus-visible{opacity:1}
+  .nrow .num{font-weight:800;color:var(--muted-text);text-align:center}
+  .nrow .nname{font-weight:700;color:var(--deep);font-size:16px}
+  .nrow .field{font-size:16px}
+  .nrow .field .lab{display:none}
+  .nrow input[type=date],.nrow .nin{
+    display:block;width:100%;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font:inherit;font-size:16px;background:#fff;color:var(--ink);min-height:36px;margin:0;
+  }
+  .nrow .nin:hover{box-shadow:none;background:#fff}
+  .nrow .nin:empty::before{content:"Type here…";color:var(--muted-text)}
+  .ninwrap{display:flex;align-items:center;gap:6px}
+  .ninwrap .nin{flex:1}
+  .nrow input[type=date]:focus,.nrow .nin:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 2px rgba(31,167,210,.3)}
+  .nrow .bestnote{font-size:13px;color:var(--muted-text);margin-top:3px}
+
+  /* ===== Palette popover ===== */
+  #palette{
+    position:fixed;z-index:100;background:#fff;border:1px solid var(--line);border-radius:10px;
+    box-shadow:0 8px 30px rgba(2,13,23,.22);padding:8px;display:none;gap:6px;
+  }
+  #palette.show{display:flex}
+  #palette .sw{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer}
+  #palette .sw:hover{transform:scale(1.12)}
+  #palette .sw.clear{background:#fff;color:var(--muted-text);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+
+  /* Toast */
+  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--deep);color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;font-weight:600;
+    box-shadow:0 8px 30px rgba(2,13,23,.3);opacity:0;pointer-events:none;transition:all .2s;z-index:120}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* Empty / utility */
+  .addbar{margin-top:14px;display:flex;gap:10px}
+  .muted{color:var(--muted-text)}
+
+  @media (max-width:1100px){
+    .arow{grid-template-columns:36px 1fr;}
+    .arow .acc{grid-column:2}
+    .arow .rowtools{grid-column:2;justify-content:flex-start}
+    .trow{grid-template-columns:46px 1fr;}
+    .trow .tacc{grid-column:2;text-align:left}
+    .nrow{grid-template-columns:1fr 1fr;}
+    .nrow.nrow4{grid-template-columns:1fr 1fr;}
+    .nrow .num{display:none}
+    .nrow .field .lab{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted-text);font-weight:700;margin-bottom:3px}
+    .nrow.head{display:none}
+  }
+
+  /* Keep the mandated banner from ever ellipsis-truncating on narrow/odd displays */
+  @media (max-width:1100px){
+    .banner .slogan{white-space:normal;overflow:visible;text-overflow:clip;letter-spacing:.22em}
+  }
+
+  /* ===== Print ===== */
+  @page{margin:12mm}
+  @media print{
+    .noprint{display:none !important}
+    body{background:#fff;font-size:12px}
+    .topbar{position:static}
+    .banner{padding:8px 0}
+    .banner .slogan{white-space:normal;overflow:visible;text-overflow:clip;letter-spacing:.2em;font-size:14px;padding-left:0}
+    .banner .lab{display:none}
+    .banner .brand{min-width:0}
+    main{padding:10px 0;max-width:none}
+    .arow,.trow,.nrow,.matrix-wrap,.hint{box-shadow:none}
+    .arow,.trow,.nrow{break-inside:avoid}
+    /* hide live-facilitation chrome that has no meaning on paper */
+    nav.tabs,.toolbar,#toast,#palette{display:none !important}
+    .mini,.setacc,th.addcol,td.addcol-cell,.legend .li.muted{display:none !important}
+    /* let wide tables paginate / shrink-to-fit instead of clipping */
+    .tablewrap{overflow:visible !important;border:0 !important}
+    table.deftable{min-width:0 !important}
+    .matrix-wrap{overflow:visible !important;border:0 !important}
+    table.matrix{min-width:0 !important;width:100% !important;table-layout:fixed;font-size:10px}
+    table.matrix th,table.matrix td{padding:5px 6px;word-break:break-word;overflow-wrap:anywhere}
+    table.matrix thead th{position:static;color:#000;background:#eee !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    table.matrix tbody th.tharea{position:static;left:auto;z-index:auto;min-width:0 !important;max-width:none;width:34%;background:#fafcfd !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    table.matrix thead th.thteam,td.mcell{min-width:0 !important}
+    .nrow.head{position:static;z-index:auto}
+    td.mcell.acc,td.mcell.flagged,td.mcell.acc.flagged,.accpill,.flag,.dot.on,.trow.mine,.nrow.head,.nrow.head .col{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .ed:hover{background:none;box-shadow:none}
+    a[href]:after{content:""}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="banner">
+    <div class="brand">
+      <!-- LOGO-WBD : Winning by Design -->
+      <svg viewBox="0 0 52 30" aria-label="Winning by Design" role="img">
+        <g fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 5 L11 25 L20 9 L29 25 L37 5"/>
+        </g>
+        <circle cx="44" cy="8" r="3.4" fill="var(--cyan)"/>
+      </svg>
+      <span class="lab">Winning&nbsp;by&nbsp;Design</span>
+    </div>
+
+    <div class="slogan">Your customer is the field</div>
+
+    <div class="brand right">
+      <span class="lab">Octave</span>
+      <!-- LOGO-OCTAVE -->
+      <svg viewBox="0 0 40 30" aria-label="Octave" role="img">
+        <path fill="#ffffff" fill-rule="evenodd" d="M21 2a11 11 0 1 0 0 22 11 11 0 0 0 0-22Zm0 5.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11Z"/>
+        <path fill="#ffffff" fill-rule="evenodd" d="M11.5 17a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/>
+      </svg>
+    </div>
+  </div>
+
+  <nav class="tabs noprint" id="tabs" aria-label="Workshop steps">
+    <button data-act="view" data-view="definitions"><span class="step">1</span>Best Practice</button>
+    <button data-act="view" data-view="team"><span class="step">2</span>Team View</button>
+    <button data-act="view" data-view="master"><span class="step">3</span>Master Matrix</button>
+    <button data-act="view" data-view="next"><span class="step">4</span>What's Next</button>
+  </nav>
+
+  <div class="toolbar noprint">
+    <div id="viewtools" class="vtools" style="margin:0"></div>
+    <div class="grow"></div>
+    <span id="conn" class="conn" role="status" aria-live="polite"></span>
+    <button class="btn" data-act="undo" id="undoBtn" title="Undo last delete / reset"><span class="ic">↶</span>Undo</button>
+    <button class="btn ghost" data-act="toggle-hint" title="Show / hide help"><span class="ic">?</span>How to use</button>
+    <button class="btn" data-act="export"><span class="ic">⭳</span>Download JSON</button>
+    <button class="btn" data-act="print"><span class="ic">🖶</span>Save&nbsp;/&nbsp;Print PDF</button>
+    <button class="btn danger" data-act="reset"><span class="ic">⟲</span>Reset</button>
+  </div>
+</div>
+
+<main>
+  <div class="hint noprint" id="hint" style="display:none">
+    <div>
+      <b>How to run this.</b> Move left&nbsp;→&nbsp;right through the five steps.
+      <b>Click any text to edit it</b> (<kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels).
+      Use the <b>◯ dot</b> to flag a cell <em>"discuss this"</em>. Use the <b>◑</b> swatch to recolour text
+      (cyan / amber / red / green / grey / black) so you can mark something live.
+      Add or remove rows&nbsp;&amp;&nbsp;teams with <b>＋</b> and <b>×</b>. Everything saves automatically;
+      <b>Undo</b> reverses the last delete or reset.
+    </div>
+    <button class="mini x" data-act="toggle-hint" aria-label="Hide help">✕</button>
+  </div>
+  <div id="view-root"></div>
+</main>
+
+<div id="palette" role="menu" aria-label="Choose colour"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+(function(){
+  /* ---------------- constants ---------------- */
+  var STORAGE_KEY = "octave_gtm_workshop_v1";
+  var UI_KEY = "octave_gtm_workshop_ui";
+
+  /* ===========================================================================
+     MULTI-USER (optional).  Leave FIREBASE_CONFIG = null to run FULLY OFFLINE on
+     a single device (all state in localStorage — the simple single-file version).
+
+     To enable real-time multi-user across devices:
+       1) Create a Firebase project and turn on Realtime Database.
+          (Start it in "test mode" so reads/writes are allowed during the workshop.)
+       2) Paste that project's config object into FIREBASE_CONFIG below.
+       3) Host this single file somewhere everyone can reach (e.g. GitHub Pages),
+          so every participant opens the SAME url.
+     Then each person picks their own team tab (that choice stays on their device)
+     and their Agree/Discuss flags, notes and edits sync live and roll up into the
+     Master Matrix for everyone. Change ROOM_ID to start a brand-new shared session.
+     =========================================================================== */
+  var FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDmjg4wEtq4g4nBJVsE0YLXFrTOJD0R4aM",
+    authDomain: "octave-workshop.firebaseapp.com",
+    databaseURL: "https://octave-workshop-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "octave-workshop",
+    storageBucket: "octave-workshop.firebasestorage.app",
+    messagingSenderId: "1089308470390",
+    appId: "1:1089308470390:web:ff34e94cd10a1eab590357"
+  };
+  /* Example — replace every value with your own project's:
+  var FIREBASE_CONFIG = {
+    apiKey: "AIza………",
+    authDomain: "your-project.firebaseapp.com",
+    databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+    projectId: "your-project",
+    appId: "1:………:web:………"
+  };
+  */
+  var ROOM_ID = "octave-gtm-default";
+  var FB = { on:false, root:null };
+  var pendingRender = false;
+
+  var COLORS = {cyan:"#1FA7D2", amber:"#E0A23C", red:"#D0454A", green:"#2E9E6B", grey:"#9AA7B4", black:"#1B1B1B"};
+  // AA-safe variants used when a swatch colour is applied to TEXT (swatch fills keep brand hex above)
+  var TEXT_COLORS = {cyan:"#0E6E92", amber:"#7a5410", red:"#B83239", green:"#1F7A50", grey:"#5E6A77", black:"#1B1B1B"};
+  var COLOR_ORDER = ["cyan","amber","red","green","grey","black"];
+
+  var VIEWS = {
+    definitions:{title:"WbD Best Practice"},
+    team:{title:"2 · Team View"},
+    master:{title:"3 · Master Matrix"},
+    next:{title:"4 · What's Next"}
+  };
+
+  /* ---------------- seed data ---------------- */
+  function seed(){
+    var teams = [
+      {id:"t_prod", name:"Product"},
+      {id:"t_pmm",  name:"Product Marketing"},
+      {id:"t_dg",   name:"Demand Gen"},
+      {id:"t_sales",name:"Sales"},
+      {id:"t_enable",name:"Enablement"},
+      {id:"t_mktg",name:"Marketing"}
+    ];
+    var A = [
+      ["a1","ICP & Persona","Who we sell to (segments, firmographics) and who buys inside the account (personas and their pains). The foundation everything downstream is built on.","Product Marketing","t_pmm",true],
+      ["a2","Messaging Framework","The core narrative: corporate story, key messages and value pillars. The shell every piece of content draws from.","Product Marketing","t_pmm",false],
+      ["a3","Content Strategy","How the messaging becomes content: what we create, why, and where the field and market use it.","Product Marketing","t_pmm",false],
+      ["a4","Market & Competitive Intelligence","Ongoing market, competitor, win/loss and customer insight that feeds strategy and messaging.","Product Marketing","t_pmm",false],
+      ["a5","Product Launch","Planning and orchestrating the go-to-market for a release; enablement owns field readiness inside it.","Product Marketing","t_pmm",false],
+      ["a6","Sales Plays (Growth Plays)","Choosing which plays and which accounts to run, and owning the outcome end to end. Sales initiates and executes; product and marketing provide the ammunition.","Sales","t_sales",true],
+      ["a7","Target Account Lists & Tagging","Defining and tagging the accounts a play targets so campaigns and ADRs can act; sales drives which accounts.","Marketing","t_mktg",false],
+      ["a8","Demand Generation & Campaigns","Always-on and targeted campaigns, ABM, events and nurture that create and accelerate pipeline.","Demand Gen","t_dg",false],
+      ["a9","Sales Enablement & Field Readiness","Making the field ready and adopting: onboarding, training, the kit, certification, reinforcement and adoption.","Enablement","t_enable",true],
+      ["a10","Field Comms & Feedback Loop","Getting information to the field, and routing what is landing back into the system.","Enablement","t_enable",false],
+      ["a11","Data, Measurement & the Number","One source of truth for GTM data and KPIs and one definition of a tracked account; the CRO owns the number.","Marketing","t_mktg",false],
+      ["a12","GTM Orchestration (end to end)","Who is accountable for the whole play's outcome, the operating cadence, and the decision forum where it runs.","Sales / CRO","t_sales",false],
+      ["a13","Customer Advisory Board & Advocacy","Running the customer advisory board, references and advocacy program.","Demand Gen","t_dg",false]
+    ];
+    var areas = A.map(function(r){
+      return {id:r[0],name:r[1],definition:r[2],accountable:r[3],accountableTeamId:r[4],friction:r[5]};
+    });
+    return {
+      teams:teams,
+      areas:areas,
+      flags:{},        // cellKey "teamId:areaId" -> "green" | "amber"
+      colors:{},       // (legacy) colorKey -> color name
+      teamNotes:{},    // "teamId:areaId" -> note text (per team, per area)
+      nextRows:[1,2,3,4,5,6].map(function(i){ return {id:"n"+i, area:"", note:"", owner:"", date:""}; }),
+      ui:{view:"definitions", revealDefs:false, revealAcc:false, dampen:true, team:"t_prod", hint:false}
+    };
+  }
+
+  /* ---------------- state ---------------- */
+  var state, undoStack = [];
+
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+  /* ---- persistence / sync layer ----
+     ui (which tab/team a person is on) is ALWAYS local to the device.
+     The shared DATA (teams, areas, flags, teamNotes, nextRows) goes to Firebase
+     when configured, else to localStorage. flags & teamNotes write per-key so
+     teams editing at the same time never clobber each other. */
+  function persistUI(){ try{ localStorage.setItem(UI_KEY, JSON.stringify(state.ui)); }catch(e){} }
+  function saveLocalAll(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+  function dataPayload(){ return { teams:state.teams, areas:state.areas, flags:state.flags||{}, teamNotes:state.teamNotes||{}, nextRows:state.nextRows }; }
+  function saveData(){ persistUI(); if(FB.on){ FB.root.update({teams:state.teams, areas:state.areas, nextRows:state.nextRows}); } else { saveLocalAll(); } }
+  function saveAll(){ persistUI(); if(FB.on){ FB.root.update(dataPayload()); } else { saveLocalAll(); } }
+  function saveFlag(key){ persistUI(); if(FB.on){ var v=state.flags[key]; if(v==null){ FB.root.child("flags/"+key).remove(); } else { FB.root.child("flags/"+key).set(v); } } else { saveLocalAll(); } }
+  function saveNote(key){ persistUI(); if(FB.on){ var v=state.teamNotes[key]; if(!v){ FB.root.child("teamNotes/"+key).remove(); } else { FB.root.child("teamNotes/"+key).set(v); } } else { saveLocalAll(); } }
+  function save(){ saveAll(); } // fallback alias for any generic call
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return null;
+      var s = JSON.parse(raw);
+      if(!s || !s.teams || !s.areas) return null;
+      s.flags = s.flags||{}; s.colors = s.colors||{}; s.teamNotes = s.teamNotes||{};
+      s.nextRows = (s.nextRows && s.nextRows.length) ? s.nextRows : seed().nextRows;
+      // migration: the original "RevOps" team slot is now "Marketing" (preserves existing data)
+      var migrated=false;
+      s.teams.forEach(function(t){ if(t.id==="t_revops"){ t.id="t_mktg"; if(t.name==="RevOps") t.name="Marketing"; migrated=true; } });
+      if(migrated){
+        s.areas.forEach(function(a){ if(a.accountableTeamId==="t_revops"){ a.accountableTeamId="t_mktg"; if(a.accountable==="RevOps") a.accountable="Marketing"; } });
+        ["flags","teamNotes"].forEach(function(coll){ var o=s[coll]; Object.keys(o).forEach(function(k){ if(k.indexOf("t_revops:")===0){ o["t_mktg:"+k.slice(9)]=o[k]; delete o[k]; } }); });
+        if(s.ui && s.ui.team==="t_revops") s.ui.team="t_mktg";
+        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }catch(e){}
+      }
+      var d = seed().ui;
+      s.ui = Object.assign({}, d, s.ui||{});
+      if(!s.teams.some(function(t){return t.id===s.ui.team;})) s.ui.team = s.teams[0] && s.teams[0].id;
+      return s;
+    }catch(e){ return null; }
+  }
+  function loadUI(){ try{ var raw=localStorage.getItem(UI_KEY); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
+
+  function pushUndo(){ undoStack.push(clone(state)); if(undoStack.length>60) undoStack.shift(); }
+  function doUndo(){
+    if(!undoStack.length) return;
+    state = undoStack.pop(); saveAll(); render(); toast("Undone");
+  }
+
+  state = load() || seed();
+  (function(){ var u=loadUI(); if(u){ state.ui = Object.assign(state.ui, u); } if(!state.teams.some(function(t){return t.id===state.ui.team;})) state.ui.team = state.teams[0] && state.teams[0].id; })();
+
+  /* ---- Firebase real-time sync ---- */
+  function loadScript(src){ return new Promise(function(res,rej){ var s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=function(){ rej(new Error("load "+src)); }; document.head.appendChild(s); }); }
+  function setConn(kind){
+    var el=$("#conn"); if(!el) return;
+    var map={connecting:["Connecting…","wait"], live:["● Live · multi-user","live"], offline:["● Reconnecting…","wait"], error:["This device only","off"]};
+    var m=map[kind]||["",""]; el.textContent=m[0]; el.className="conn "+(m[1]||"");
+  }
+  function onRemote(snap){
+    var d = snap.val(); if(!d) return;
+    if(d.teams) state.teams = d.teams;
+    if(d.areas) state.areas = d.areas;
+    state.flags = d.flags || {};
+    state.teamNotes = d.teamNotes || {};
+    if(d.nextRows) state.nextRows = d.nextRows;
+    if(!state.teams.some(function(t){return t.id===state.ui.team;})) state.ui.team = state.teams[0] && state.teams[0].id;
+    renderGuarded();
+  }
+  function renderGuarded(){
+    var a=document.activeElement;
+    if(a && a.classList && a.classList.contains("ed")){ pendingRender=true; return; } // don't yank focus mid-edit
+    render();
+  }
+  function initFirebase(){
+    render();
+    setConn("connecting");
+    loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js")
+      .then(function(){ return loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"); })
+      .then(function(){
+        firebase.initializeApp(FIREBASE_CONFIG);
+        var db = firebase.database();
+        FB.root = db.ref("rooms/"+ROOM_ID);
+        db.ref(".info/connected").on("value", function(s){ setConn(s.val()?"live":"offline"); });
+        return FB.root.once("value");
+      })
+      .then(function(snap){
+        FB.on = true;
+        if(!snap.exists()){ FB.root.set(dataPayload()); } // first person seeds the shared room
+        FB.root.on("value", onRemote);
+      })
+      .catch(function(){ FB.on=false; setConn("error"); toast("Multi-user unavailable — using this device only"); });
+  }
+
+  /* ---------------- helpers ---------------- */
+  function $(s,r){ return (r||document).querySelector(s); }
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+  function uid(p){ return p + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8); }
+  function teamById(id){ for(var i=0;i<state.teams.length;i++) if(state.teams[i].id===id) return state.teams[i]; return null; }
+  function areaIndex(id){ for(var i=0;i<state.areas.length;i++) if(state.areas[i].id===id) return i; return -1; }
+  function endsWith(s,suf){ return s.length>=suf.length && s.slice(s.length-suf.length)===suf; }
+  // flag status per cell: "green" (agreed) | "amber" (discuss) | null. Legacy `true` -> amber.
+  function getFlag(key){ var v=state.flags[key]; if(v===true) return "amber"; if(v==="green"||v==="amber") return v; return null; }
+
+  function colorStyle(key){
+    var c = state.colors[key];
+    return c ? ' style="color:'+(TEXT_COLORS[c]||COLORS[c])+'"' : "";
+  }
+  function ed(value, type, id, colorkey){
+    return '<span class="ed" contenteditable="true" spellcheck="false" role="textbox" tabindex="0"'+
+      ' data-edit="'+type+'" data-id="'+esc(id)+'"'+
+      (colorkey?' data-colorkey="'+esc(colorkey)+'"'+colorStyle(colorkey):"")+
+      '>'+esc(value)+'</span>';
+  }
+  function palBtn(key){
+    return '<button type="button" class="mini pal" data-act="palette" data-colorkey="'+esc(key)+'" title="Change text colour" aria-label="Change text colour">◑</button>';
+  }
+  function dotBtn(cellKey, title){
+    var st = getFlag(cellKey);
+    var cls = "dot" + (st==="amber"?" on amber":"") + (st==="green"?" on green":"");
+    var t = esc(title||"Flag for discussion");
+    return '<button type="button" class="'+cls+'" data-act="dot" data-key="'+esc(cellKey)+'" aria-pressed="'+(!!st)+'" aria-label="'+t+'" title="'+t+'"></button>';
+  }
+  function flagPill(){ return '<span class="flag">Friction</span>'; }
+  // The area-row friction dot is backed directly by a.friction (NOT state.flags) so it
+  // reflects seed data on first paint and clears in a single click.
+  function frictionDot(a){
+    var on = !!a.friction;
+    var label = esc((on?"Friction flag on — ":"Flag as friction — ")+a.name);
+    return '<button type="button" class="dot'+(on?" on":"")+'" data-act="friction" data-id="'+esc(a.id)+'" aria-pressed="'+on+'" aria-label="'+label+'" title="'+label+'"></button>';
+  }
+
+  function toast(msg){
+    var t = $("#toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove("show"); }, 1700);
+  }
+
+  /* ---------------- view tools (toolbar middle) ---------------- */
+  function renderViewTools(){
+    var v = state.ui.view, h = "";
+    if(v==="definitions"){
+      h = '<label class="switch"><input type="checkbox" data-act="toggle-revealdefs" '+(state.ui.revealDefs?"checked":"")+'><span class="track"></span>Reveal definitions</label>'+
+          '<label class="switch"><input type="checkbox" data-act="toggle-revealacc" '+(state.ui.revealAcc?"checked":"")+'><span class="track"></span>Reveal accountable</label>';
+    } else if(v==="master"){
+      h = '<button class="btn" data-act="add-area"><span class="ic">＋</span>Add area</button>'+
+          '<button class="btn" data-act="add-team"><span class="ic">＋</span>Add team</button>';
+    }
+    $("#viewtools").innerHTML = h;
+  }
+
+  /* ---------------- WbD Best Practice (step 1) — 3-column reveal table ---------------- */
+  function masked(label){
+    return '<span class="masked" role="img" aria-label="'+esc(label)+' hidden — toggle reveal to show" title="Hidden — toggle reveal to show"></span>';
+  }
+  function renderDefinitions(){
+    var rd = state.ui.revealDefs, ra = state.ui.revealAcc;
+    var h = '<div class="vhead"><h1>'+esc(VIEWS.definitions.title)+'</h1></div>';
+    h += '<div class="tablewrap"><table class="deftable"><colgroup><col style="width:27%"><col style="width:45%"><col style="width:28%"></colgroup>';
+    h += '<thead><tr><th>Area / Process</th><th>Definitions</th><th>Accountable</th></tr></thead><tbody>';
+    state.areas.forEach(function(a){
+      h += '<tr>';
+      h += '<td class="c1"><div class="c1in">'+ed(a.name,"area-name",a.id)+
+             '<button class="mini del rowdel" data-act="del-area" data-id="'+a.id+'" title="Remove area" aria-label="Remove area">✕</button></div></td>';
+      h += '<td class="creveal">'+(rd ? ed(a.definition,"area-def",a.id) : masked("Definition"))+'</td>';
+      h += '<td class="creveal cacc">'+(ra ? ed(a.accountable,"area-acc",a.id) : masked("Accountable"))+'</td>';
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>';
+    h += '<div class="addbar noprint"><button class="btn" data-act="add-area"><span class="ic">＋</span>Add area / process</button></div>';
+    return h;
+  }
+
+  /* ---------------- team view (same table as Best Practice + Flag & Notes columns) ---------------- */
+  function flagBtns(key){
+    var st = getFlag(key);
+    return '<button type="button" class="flagbtn green" data-act="flag" data-key="'+esc(key)+'" data-status="green" aria-pressed="'+(st==="green")+'" title="Mark agreed">Agree</button>'+
+           '<button type="button" class="flagbtn amber" data-act="flag" data-key="'+esc(key)+'" data-status="amber" aria-pressed="'+(st==="amber")+'" title="Flag for discussion">Discuss</button>';
+  }
+  function renderTeam(){
+    var cur = state.ui.team;
+    var t = teamById(cur) || state.teams[0];
+    if(t) cur = t.id;
+    var h = '<div class="vhead"><h1>'+esc(VIEWS.team.title)+'</h1></div>';
+
+    h += '<div class="teamswitch noprint" aria-label="Select team">';
+    state.teams.forEach(function(tm){
+      h += '<button data-act="team" data-id="'+tm.id+'" class="'+(tm.id===cur?"active":"")+'" aria-current="'+(tm.id===cur?"true":"false")+'">'+esc(tm.name)+'</button>';
+    });
+    h += '</div>';
+
+    if(t){ h += '<p style="margin:0 0 12px;font-size:16px"><b style="color:var(--deep)">'+esc(t.name)+'</b> — flag each area as <b style="color:#1F7A50">Agree</b> or <b style="color:var(--amber-text)">Discuss</b>, and add your notes.</p>'; }
+
+    h += '<div class="tablewrap"><table class="deftable teamtable"><colgroup><col style="width:19%"><col style="width:31%"><col style="width:16%"><col style="width:18%"><col style="width:16%"></colgroup>';
+    h += '<thead><tr><th>Area / Process</th><th>Definitions</th><th>Accountable</th><th>Flag</th><th>Notes</th></tr></thead><tbody>';
+    state.areas.forEach(function(a){
+      var key = cur+":"+a.id;
+      h += '<tr>';
+      h += '<td class="c1"><div class="c1in">'+ed(a.name,"area-name",a.id)+'</div></td>';
+      h += '<td class="creveal">'+ed(a.definition,"area-def",a.id)+'</td>';
+      h += '<td class="creveal cacc">'+ed(a.accountable,"area-acc",a.id)+'</td>';
+      h += '<td class="flagcell">'+flagBtns(key)+'</td>';
+      h += '<td class="notecell">'+ed(state.teamNotes[key]||"","team-note",key)+'</td>';
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>';
+    return h;
+  }
+
+  /* ---------------- master matrix ---------------- */
+  function renderMaster(){
+    var h = '<div class="vhead"><h1>'+esc(VIEWS.master.title)+'</h1></div>';
+    h += '<div class="legend">'+
+         '<span class="li"><span class="accpill" style="position:static">ACC</span> Best-practice accountable</span>'+
+         '<span class="li"><span class="swatch" style="background:var(--green)"></span> Agreed</span>'+
+         '<span class="li"><span class="swatch" style="background:var(--amber)"></span> Discuss</span>'+
+         '<span class="li muted">Teams\' Agree / Discuss flags appear here · click a cell to toggle discuss · hover an empty cell to move accountability.</span>'+
+         '</div>';
+
+    h += '<div class="matrix-wrap"><table class="matrix"><thead><tr>';
+    h += '<th class="corner">GTM Area</th>';
+    state.teams.forEach(function(t){
+      h += '<th class="thteam">'+ed(t.name,"team-name",t.id)+' <button class="mini del" data-act="del-team" data-id="'+t.id+'" title="Remove team" aria-label="Remove team">✕</button></th>';
+    });
+    h += '<th class="addcol"><button class="mini" data-act="add-team" title="Add team" aria-label="Add team">＋</button></th>';
+    h += '</tr></thead><tbody>';
+
+    state.areas.forEach(function(a,i){
+      h += '<tr>';
+      h += '<th class="tharea">'+
+             '<span class="num">'+(i+1)+'</span>'+
+             '<span class="areaname">'+ed(a.name,"area-name",a.id)+'</span>'+
+             ' <button class="mini del" data-act="del-area" data-id="'+a.id+'" title="Remove area" aria-label="Remove area">✕</button>'+
+             '<div class="accnote">Best practice: <span class="who">'+ed(a.accountable,"area-acc",a.id)+'</span></div>'+
+           '</th>';
+      state.teams.forEach(function(t){
+        var key = t.id+":"+a.id;
+        var isAcc = a.accountableTeamId===t.id;
+        var st = getFlag(key);
+        var cls = "mcell"+(isAcc?" acc":"")+(st==="amber"?" flagged":"")+(st==="green"?" agreed":"");
+        h += '<td class="'+cls+'"><div class="mcellinner">';
+        h += dotBtn(key, "Flag "+a.name+" for "+t.name+" — discuss this");
+        if(isAcc){
+          h += '<span class="accpill" title="'+esc(t.name)+' is accountable for '+esc(a.name)+'">ACC</span>';
+        }else{
+          h += '<button class="setacc" data-act="set-acc" data-area="'+a.id+'" data-team="'+t.id+'" title="Make '+esc(t.name)+' accountable" aria-label="Make '+esc(t.name)+' accountable for '+esc(a.name)+'">＋ make</button>';
+        }
+        h += '</div></td>';
+      });
+      h += '<td class="addcol-cell"></td>';
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>';
+    return h;
+  }
+
+  /* ---------------- what's next (blank Area + Notes) ---------------- */
+  function renderNext(){
+    var h = '<div class="vhead"><h1>'+esc(VIEWS.next.title)+'</h1></div>';
+    h += '<div class="nextlist">';
+    h += '<div class="nrow head head4"><div class="col">Area / Process</div><div class="col">Notes</div><div class="col">Owner</div><div class="col">Date</div><div class="col"></div></div>';
+    state.nextRows.forEach(function(r){
+      h += '<div class="nrow nrow4">';
+      h += '<div class="field"><div class="lab">Area / Process</div>'+
+           '<span class="nin ed" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-edit="next-area" data-id="'+r.id+'">'+esc(r.area||"")+'</span></div>';
+      h += '<div class="field"><div class="lab">Notes</div>'+
+           '<span class="nin ed" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-edit="next-note" data-id="'+r.id+'">'+esc(r.note||"")+'</span></div>';
+      h += '<div class="field"><div class="lab">Owner</div>'+
+           '<span class="nin ed" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-edit="next-owner" data-id="'+r.id+'">'+esc(r.owner||"")+'</span></div>';
+      h += '<div class="field"><div class="lab">Date</div>'+
+           '<input type="date" data-edit="next-date" data-id="'+r.id+'" value="'+esc(r.date||"")+'"></div>';
+      h += '<div class="field nrowact"><button class="mini del" data-act="del-next" data-id="'+r.id+'" title="Remove row" aria-label="Remove row">✕</button></div>';
+      h += '</div>';
+    });
+    h += '</div>';
+    h += '<div class="addbar noprint"><button class="btn" data-act="add-next"><span class="ic">＋</span>Add row</button></div>';
+    return h;
+  }
+
+  /* ---------------- master render dispatch ---------------- */
+  function render(){
+    if(state.ui.view==="best") state.ui.view="definitions"; // legacy view id, tab removed
+    // tabs
+    var tabs = document.querySelectorAll("#tabs button");
+    for(var i=0;i<tabs.length;i++){
+      var active = tabs[i].getAttribute("data-view")===state.ui.view;
+      tabs[i].classList.toggle("active", active);
+      tabs[i].setAttribute("aria-current", active ? "page" : "false");
+    }
+    renderViewTools();
+    $("#hint").style.display = state.ui.hint ? "flex" : "none";
+    $("#undoBtn").disabled = undoStack.length===0;
+
+    var root = $("#view-root"), v = state.ui.view, html="";
+    if(v==="team")        html = renderTeam();
+    else if(v==="master") html = renderMaster();
+    else if(v==="next")   html = renderNext();
+    else                  html = renderDefinitions();
+    root.innerHTML = html;
+  }
+
+  /* ---------------- edits ---------------- */
+  function applyEdit(type, id, val){
+    var a, t;
+    if(type==="area-name"){ a=state.areas[areaIndex(id)]; if(a) a.name=val; saveData(); }
+    else if(type==="area-def"){ a=state.areas[areaIndex(id)]; if(a) a.definition=val; saveData(); }
+    else if(type==="area-acc"){ a=state.areas[areaIndex(id)]; if(a){ a.accountable=val; var m=matchTeam(val); if(m) a.accountableTeamId=m.id; } saveData(); }
+    else if(type==="team-name"){ t=teamById(id); if(t){ var oldName=t.name; t.name=val; state.areas.forEach(function(a){ if(a.accountableTeamId===id && a.accountable===oldName) a.accountable=val; }); } saveData(); }
+    else if(type==="team-note"){ state.teamNotes[id]=val; saveNote(id); }
+    else if(type==="next-area"){ var r=nextRowById(id); if(r) r.area=val; saveData(); }
+    else if(type==="next-note"){ var r2=nextRowById(id); if(r2) r2.note=val; saveData(); }
+    else if(type==="next-owner"){ var r3=nextRowById(id); if(r3) r3.owner=val; saveData(); }
+    else if(type==="next-date"){ var r4=nextRowById(id); if(r4) r4.date=val; saveData(); }
+  }
+  function nextRowById(id){ for(var i=0;i<state.nextRows.length;i++) if(state.nextRows[i].id===id) return state.nextRows[i]; return null; }
+  function matchTeam(label){
+    if(!label) return null;
+    var low = label.toLowerCase();
+    // exact first
+    for(var i=0;i<state.teams.length;i++){ if(state.teams[i].name.toLowerCase()===low) return state.teams[i]; }
+    // substring: prefer the LONGEST matching name so "Product Marketing" beats "Product"
+    // (still resolves "Sales / CRO" -> Sales)
+    var best=null;
+    for(var j=0;j<state.teams.length;j++){
+      var tn=state.teams[j].name.toLowerCase();
+      if(tn && low.indexOf(tn)>-1 && (!best || tn.length>best.name.length)) best=state.teams[j];
+    }
+    return best;
+  }
+
+  /* ---------------- structural ops ---------------- */
+  function addArea(){
+    pushUndo();
+    var id = uid("a");
+    state.areas.push({id:id,name:"New area",definition:"Describe this area…",accountable:"",accountableTeamId:"",friction:false});
+    saveData(); render(); toast("Area added");
+  }
+  function delArea(id){
+    var a = state.areas[areaIndex(id)]; if(!a) return;
+    if(!confirm('Remove area "'+a.name+'"? You can Undo this.')) return;
+    pushUndo();
+    state.areas = state.areas.filter(function(x){return x.id!==id;});
+    // cleanup flags/colors/next — anchored matching so deleting a1 never touches a10/a11/a12
+    var suf = ":"+id;
+    Object.keys(state.flags).forEach(function(k){ if(endsWith(k,suf)) delete state.flags[k]; });
+    Object.keys(state.teamNotes).forEach(function(k){ if(endsWith(k,suf)) delete state.teamNotes[k]; });
+    Object.keys(state.colors).forEach(function(k){
+      if(k==="an:"+id || k==="ac:"+id || k==="ad:"+id || (k.indexOf("mc:")===0 && endsWith(k,suf))) delete state.colors[k];
+    });
+    saveAll(); render(); toast("Area removed");
+  }
+  function addTeam(){
+    pushUndo();
+    var id = uid("t");
+    state.teams.push({id:id,name:"New team"});
+    saveData(); render(); toast("Team added");
+  }
+  function delTeam(id){
+    var t = teamById(id); if(!t) return;
+    if(!confirm('Remove team "'+t.name+'"? You can Undo this.')) return;
+    pushUndo();
+    state.teams = state.teams.filter(function(x){return x.id!==id;});
+    Object.keys(state.flags).forEach(function(k){ if(k.indexOf(id+":")===0) delete state.flags[k]; });
+    Object.keys(state.teamNotes).forEach(function(k){ if(k.indexOf(id+":")===0) delete state.teamNotes[k]; });
+    Object.keys(state.colors).forEach(function(k){ if(k==="tn:"+id || k.indexOf("mc:"+id+":")===0) delete state.colors[k]; });
+    state.areas.forEach(function(a){ if(a.accountableTeamId===id) a.accountableTeamId=""; });
+    if(state.ui.team===id) state.ui.team = state.teams[0] && state.teams[0].id;
+    saveAll(); render(); toast("Team removed");
+  }
+  function setAcc(areaId, teamId){
+    var a = state.areas[areaIndex(areaId)], t = teamById(teamId); if(!a||!t) return;
+    pushUndo();
+    a.accountableTeamId = teamId;
+    a.accountable = t.name;
+    saveData(); render(); toast(t.name+" now accountable");
+  }
+  function toggleDot(key){ // master cell click -> toggle "discuss" (amber)
+    if(getFlag(key)==="amber"){ delete state.flags[key]; }
+    else { state.flags[key]="amber"; }
+    saveFlag(key); render();
+  }
+  function setFlag(key,status){ // team view Agree/Discuss buttons; mutually exclusive, click again clears
+    if(getFlag(key)===status){ delete state.flags[key]; }
+    else { state.flags[key]=status; }
+    saveFlag(key); render();
+  }
+  function addNextRow(){ pushUndo(); state.nextRows.push({id:uid("n"),area:"",note:"",owner:"",date:""}); saveData(); render(); }
+  function delNextRow(id){
+    var r=nextRowById(id); if(!r) return;
+    if((r.area||r.note||r.owner||r.date) && !confirm("Remove this row?")) return;
+    pushUndo();
+    state.nextRows = state.nextRows.filter(function(x){return x.id!==id;});
+    saveData(); render();
+  }
+  function toggleFriction(id){
+    var a = state.areas[areaIndex(id)];
+    if(a){ a.friction = !a.friction; saveData(); render(); }
+  }
+
+  /* ---------------- palette ---------------- */
+  var palKey=null, palTrigger=null;
+  function buildPalette(){
+    var p=$("#palette"), h="";
+    COLOR_ORDER.forEach(function(c){
+      h += '<button type="button" class="sw" role="menuitem" data-act="pickcolor" data-color="'+c+'" title="'+c+'" aria-label="'+c+'" style="background:'+COLORS[c]+'"></button>';
+    });
+    h += '<button type="button" class="sw clear" role="menuitem" data-act="pickcolor" data-color="" title="Default" aria-label="Default colour">↺</button>';
+    p.innerHTML = h;
+  }
+  function openPalette(btn,key){
+    palKey=key; palTrigger=btn;
+    var p=$("#palette"); p.classList.add("show");
+    var r=btn.getBoundingClientRect(), pw=p.offsetWidth||230, ph=p.offsetHeight||44;
+    var left=Math.min(r.left, window.innerWidth-pw-8);
+    var top=r.bottom+6; if(top+ph>window.innerHeight) top=r.top-ph-6;
+    p.style.left=Math.max(8,left)+"px"; p.style.top=Math.max(8,top)+"px";
+    var first=p.querySelector(".sw"); if(first) first.focus();
+  }
+  function closePalette(){
+    var p=$("#palette"); if(!p.classList.contains("show")) return;
+    p.classList.remove("show"); palKey=null;
+    if(palTrigger){ try{ palTrigger.focus(); }catch(e){} palTrigger=null; }
+  }
+  function pickColor(c){
+    if(!palKey){ closePalette(); return; }
+    var key=palKey;
+    if(c){ state.colors[key]=c; } else { delete state.colors[key]; }
+    save(); render(); closePalette();
+  }
+
+  /* ---------------- export / reset ---------------- */
+  function exportJSON(){
+    var blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+    var url = URL.createObjectURL(blob), a=document.createElement("a");
+    a.href=url; a.download="octave-gtm-accountability.json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},500);
+    toast("JSON downloaded");
+  }
+  function resetAll(){
+    var msg = FB.on
+      ? "Reset the SHARED session back to the starting point for EVERYONE? This clears all flags, notes and edits for all teams. You can Undo immediately afterwards."
+      : "Reset everything back to the starting point? This clears all flags, notes and edits. You can Undo immediately afterwards.";
+    if(!confirm(msg)) return;
+    pushUndo();
+    var keepUi = state.ui;
+    state = seed();
+    state.ui = keepUi; // keep this device on its current tab
+    saveAll(); render(); toast("Reset to starting point");
+  }
+  // The wide consolidated matrix prints best in landscape; the list views stay portrait.
+  function printView(){
+    closePalette();
+    var st=null;
+    if(state.ui.view==="master"){
+      st=document.createElement("style");
+      st.textContent="@page{size:A4 landscape;margin:10mm}";
+      document.head.appendChild(st);
+    }
+    var cleanup=function(){ if(st){ st.parentNode && st.parentNode.removeChild(st); st=null; } window.removeEventListener("afterprint",cleanup); };
+    window.addEventListener("afterprint",cleanup);
+    window.print();
+    setTimeout(cleanup, 1000);
+  }
+
+  /* ---------------- events ---------------- */
+  var root = $("#view-root");
+
+  // inline editing
+  document.addEventListener("focusin", function(e){
+    var el = e.target.closest && e.target.closest(".ed");
+    if(el){ el.dataset.orig = el.textContent; delete el.dataset.cancel; }
+  });
+  document.addEventListener("keydown", function(e){
+    var el = e.target.closest && e.target.closest(".ed");
+    if(el){
+      if(e.key==="Enter"){ e.preventDefault(); el.blur(); }
+      else if(e.key==="Escape"){ e.preventDefault(); el.dataset.cancel="1"; el.textContent=el.dataset.orig||""; el.blur(); }
+      return;
+    }
+    // arrow-key navigation inside the colour palette (APG menu pattern)
+    var pal=$("#palette");
+    if(pal.classList.contains("show") && e.target.closest && e.target.closest("#palette")){
+      var sws=[].slice.call(pal.querySelectorAll(".sw")), i=sws.indexOf(e.target);
+      if(e.key==="ArrowRight"||e.key==="ArrowDown"){ e.preventDefault(); sws[(i+1)%sws.length].focus(); return; }
+      if(e.key==="ArrowLeft"||e.key==="ArrowUp"){ e.preventDefault(); sws[(i-1+sws.length)%sws.length].focus(); return; }
+    }
+    if(e.key==="Escape") closePalette();
+  });
+  document.addEventListener("focusout", function(e){
+    var el = e.target.closest && e.target.closest(".ed");
+    if(!el) return;
+    var flush = function(){ if(pendingRender){ pendingRender=false; render(); } }; // apply any remote update that arrived mid-edit
+    if(el.dataset.cancel){ delete el.dataset.cancel; flush(); return; }
+    var val = el.textContent.replace(/\s+/g," ").trim();
+    if(val===(el.dataset.orig||"").replace(/\s+/g," ").trim()){ flush(); return; } // no change
+    // capture where focus is heading so we can restore it after the re-render destroys the DOM
+    var nextEd = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".ed");
+    var nextSel = nextEd ? '[data-edit="'+nextEd.dataset.edit+'"][data-id="'+nextEd.dataset.id+'"]' : null;
+    applyEdit(el.dataset.edit, el.dataset.id, val);
+    pendingRender=false;
+    render();
+    if(nextSel){ var t=document.querySelector(nextSel); if(t){ t.focus(); } }
+  });
+
+  // date inputs (and any future inputs)
+  document.addEventListener("change", function(e){
+    var el = e.target;
+    if(el.matches && el.matches("input[type=date][data-edit]")){
+      applyEdit(el.getAttribute("data-edit"), el.getAttribute("data-id"), el.value);
+    }
+    // toolbar switches
+    if(el.matches && el.matches('input[data-act="toggle-revealdefs"]')){ state.ui.revealDefs=el.checked; persistUI(); render(); }
+    if(el.matches && el.matches('input[data-act="toggle-revealacc"]')){ state.ui.revealAcc=el.checked; persistUI(); render(); }
+    if(el.matches && el.matches('input[data-act="toggle-dampen"]')){ state.ui.dampen=el.checked; persistUI(); render(); }
+  });
+
+  // clicks (delegated)
+  document.addEventListener("click", function(e){
+    var b = e.target.closest("[data-act]");
+    if(!b){ if(!e.target.closest("#palette")) closePalette(); return; }
+    var act = b.getAttribute("data-act");
+    switch(act){
+      case "view": state.ui.view=b.getAttribute("data-view"); persistUI(); closePalette(); render(); window.scrollTo(0,0); break;
+      case "team": state.ui.team=b.getAttribute("data-id"); persistUI(); render(); break;
+      case "dot": toggleDot(b.getAttribute("data-key")); break;
+      case "flag": setFlag(b.getAttribute("data-key"), b.getAttribute("data-status")); break;
+      case "add-next": addNextRow(); break;
+      case "del-next": delNextRow(b.getAttribute("data-id")); break;
+      case "friction": toggleFriction(b.getAttribute("data-id")); break;
+      case "set-acc": setAcc(b.getAttribute("data-area"), b.getAttribute("data-team")); break;
+      case "add-area": addArea(); break;
+      case "del-area": delArea(b.getAttribute("data-id")); break;
+      case "add-team": addTeam(); break;
+      case "del-team": delTeam(b.getAttribute("data-id")); break;
+      case "palette": e.preventDefault(); openPalette(b, b.getAttribute("data-colorkey")); break;
+      case "pickcolor": e.preventDefault(); pickColor(b.getAttribute("data-color")); break;
+      case "toggle-hint": state.ui.hint=!state.ui.hint; persistUI(); render(); break;
+      case "undo": doUndo(); break;
+      case "export": exportJSON(); break;
+      case "print": printView(); break;
+      case "reset": resetAll(); break;
+    }
+    if(act!=="palette") { /* keep palette open only for its own button */ }
+  });
+
+  window.addEventListener("resize", closePalette);
+  window.addEventListener("scroll", function(){ if($("#palette").classList.contains("show")) closePalette(); }, true);
+
+  /* ---------------- boot ---------------- */
+  buildPalette();
+  if(FIREBASE_CONFIG){ initFirebase(); } else { render(); }
+})();
+</script>
+</body>
+</html>
