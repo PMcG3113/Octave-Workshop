@@ -221,6 +221,14 @@
   .deftable td.notecell .ed{display:block;min-height:22px;color:#3f4b57}
   .deftable td.notecell .ed:empty::before{content:"Add a note…";color:var(--muted-text)}
 
+  /* growth plays table */
+  .growthtable td.cacc .ed{display:block;min-height:22px}
+  .growthtable td.cacc .ed:empty::before{content:"Add org…";color:var(--muted-text);font-weight:400}
+  .growthtable td.notecell .ed:empty::before{content:"List support needed…"}
+  .growthtable td.growthact{text-align:center}
+  .growthtable .growthact .mini{opacity:0;transition:opacity .12s}
+  .growthtable tr:hover .growthact .mini,.growthtable .growthact .mini:focus-visible{opacity:1}
+
   /* ===== Team view ===== */
   .teamswitch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
   .teamswitch button{
@@ -425,6 +433,7 @@
     <button data-act="view" data-view="team"><span class="step">2</span>Team View</button>
     <button data-act="view" data-view="master"><span class="step">3</span>Master Matrix</button>
     <button data-act="view" data-view="next"><span class="step">4</span>What's Next</button>
+    <button data-act="view" data-view="growth"><span class="step">5</span>Growth Plays</button>
   </nav>
 
   <div class="toolbar noprint">
@@ -509,7 +518,8 @@
     definitions:{title:"WbD Best Practice"},
     team:{title:"2 · Team View"},
     master:{title:"3 · Master Matrix"},
-    next:{title:"4 · What's Next"}
+    next:{title:"4 · What's Next"},
+    growth:{title:"5 · Growth Plays"}
   };
 
   /* ---------------- seed data ---------------- */
@@ -547,6 +557,18 @@
       colors:{},       // (legacy) colorKey -> color name
       teamNotes:{},    // "teamId:areaId" -> note text (per team, per area)
       nextRows:[1,2,3,4,5,6].map(function(i){ return {id:"n"+i, area:"", note:"", owner:"", date:""}; }),
+      growthPlays:[
+        "Prioritization",
+        "Play Identification & Formation",
+        "Messaging & Positioning",
+        "Sales Play Kit",
+        "Sales & Technical Enablement",
+        "Target Account Lists & Tagging",
+        "Campaign Execution & Demand Gen",
+        "Incentive Mgmt",
+        "Deal Registration & Performance Tracking",
+        "Orchestration & ELT Reporting"
+      ].map(function(a,i){ return {id:"g"+(i+1), action:a, accountable:"", support:"", escalation:""}; }),
       ui:{view:"definitions", revealDefs:false, revealAcc:false, dampen:true, team:"t_prod", hint:false}
     };
   }
@@ -563,8 +585,8 @@
      teams editing at the same time never clobber each other. */
   function persistUI(){ try{ localStorage.setItem(UI_KEY, JSON.stringify(state.ui)); }catch(e){} }
   function saveLocalAll(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
-  function dataPayload(){ return { teams:state.teams, areas:state.areas, flags:state.flags||{}, teamNotes:state.teamNotes||{}, nextRows:state.nextRows }; }
-  function saveData(){ persistUI(); if(FB.on){ FB.root.update({teams:state.teams, areas:state.areas, nextRows:state.nextRows}); } else { saveLocalAll(); } }
+  function dataPayload(){ return { teams:state.teams, areas:state.areas, flags:state.flags||{}, teamNotes:state.teamNotes||{}, nextRows:state.nextRows, growthPlays:state.growthPlays }; }
+  function saveData(){ persistUI(); if(FB.on){ FB.root.update({teams:state.teams, areas:state.areas, nextRows:state.nextRows, growthPlays:state.growthPlays}); } else { saveLocalAll(); } }
   function saveAll(){ persistUI(); if(FB.on){ FB.root.update(dataPayload()); } else { saveLocalAll(); } }
   function saveFlag(key){ persistUI(); if(FB.on){ var v=state.flags[key]; if(v==null){ FB.root.child("flags/"+key).remove(); } else { FB.root.child("flags/"+key).set(v); } } else { saveLocalAll(); } }
   function saveNote(key){ persistUI(); if(FB.on){ var v=state.teamNotes[key]; if(!v){ FB.root.child("teamNotes/"+key).remove(); } else { FB.root.child("teamNotes/"+key).set(v); } } else { saveLocalAll(); } }
@@ -578,6 +600,7 @@
       if(!s || !s.teams || !s.areas) return null;
       s.flags = s.flags||{}; s.colors = s.colors||{}; s.teamNotes = s.teamNotes||{};
       s.nextRows = (s.nextRows && s.nextRows.length) ? s.nextRows : seed().nextRows;
+      s.growthPlays = (s.growthPlays && s.growthPlays.length) ? s.growthPlays : seed().growthPlays;
       // migration: the original "RevOps" team slot is now "Marketing" (preserves existing data)
       var migrated=false;
       s.teams.forEach(function(t){ if(t.id==="t_revops"){ t.id="t_mktg"; if(t.name==="RevOps") t.name="Marketing"; migrated=true; } });
@@ -618,6 +641,7 @@
     state.flags = d.flags || {};
     state.teamNotes = d.teamNotes || {};
     if(d.nextRows) state.nextRows = d.nextRows;
+    if(d.growthPlays) state.growthPlays = d.growthPlays;
     if(!state.teams.some(function(t){return t.id===state.ui.team;})) state.ui.team = state.teams[0] && state.teams[0].id;
     renderGuarded();
   }
@@ -641,6 +665,7 @@
       .then(function(snap){
         FB.on = true;
         if(!snap.exists()){ FB.root.set(dataPayload()); } // first person seeds the shared room
+        else if(!snap.child("growthPlays").exists()){ FB.root.child("growthPlays").set(state.growthPlays || seed().growthPlays); } // add Growth Plays to an existing room
         FB.root.on("value", onRemote);
       })
       .catch(function(){ FB.on=false; setConn("error"); toast("Multi-user unavailable — using this device only"); });
@@ -830,6 +855,25 @@
     return h;
   }
 
+  /* ---------------- growth plays (shared 4-column table) ---------------- */
+  function renderGrowth(){
+    var h = '<div class="vhead"><h1>'+esc(VIEWS.growth.title)+'</h1></div>';
+    h += '<div class="tablewrap"><table class="deftable growthtable"><colgroup><col style="width:21%"><col style="width:18%"><col style="width:37%"><col style="width:18%"><col style="width:40px"></colgroup>';
+    h += '<thead><tr><th>Action</th><th>Accountable</th><th>What support is needed</th><th>Who owns any escalations</th><th></th></tr></thead><tbody>';
+    state.growthPlays.forEach(function(g){
+      h += '<tr>';
+      h += '<td class="c1"><div class="c1in">'+ed(g.action,"growth-action",g.id)+'</div></td>';
+      h += '<td class="cacc">'+ed(g.accountable,"growth-acc",g.id)+'</td>';
+      h += '<td class="notecell">'+ed(g.support,"growth-support",g.id)+'</td>';
+      h += '<td class="cacc">'+ed(g.escalation,"growth-escalation",g.id)+'</td>';
+      h += '<td class="growthact"><button class="mini del" data-act="del-growth" data-id="'+g.id+'" title="Remove row" aria-label="Remove row">✕</button></td>';
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>';
+    h += '<div class="addbar noprint"><button class="btn" data-act="add-growth"><span class="ic">＋</span>Add action</button></div>';
+    return h;
+  }
+
   /* ---------------- master render dispatch ---------------- */
   function render(){
     if(state.ui.view==="best") state.ui.view="definitions"; // legacy view id, tab removed
@@ -848,6 +892,7 @@
     if(v==="team")        html = renderTeam();
     else if(v==="master") html = renderMaster();
     else if(v==="next")   html = renderNext();
+    else if(v==="growth") html = renderGrowth();
     else                  html = renderDefinitions();
     root.innerHTML = html;
   }
@@ -864,7 +909,12 @@
     else if(type==="next-note"){ var r2=nextRowById(id); if(r2) r2.note=val; saveData(); }
     else if(type==="next-owner"){ var r3=nextRowById(id); if(r3) r3.owner=val; saveData(); }
     else if(type==="next-date"){ var r4=nextRowById(id); if(r4) r4.date=val; saveData(); }
+    else if(type==="growth-action"){ var g=gpById(id); if(g) g.action=val; saveData(); }
+    else if(type==="growth-acc"){ var g2=gpById(id); if(g2) g2.accountable=val; saveData(); }
+    else if(type==="growth-support"){ var g3=gpById(id); if(g3) g3.support=val; saveData(); }
+    else if(type==="growth-escalation"){ var g4=gpById(id); if(g4) g4.escalation=val; saveData(); }
   }
+  function gpById(id){ for(var i=0;i<state.growthPlays.length;i++) if(state.growthPlays[i].id===id) return state.growthPlays[i]; return null; }
   function nextRowById(id){ for(var i=0;i<state.nextRows.length;i++) if(state.nextRows[i].id===id) return state.nextRows[i]; return null; }
   function matchTeam(label){
     if(!label) return null;
@@ -943,6 +993,14 @@
     if((r.area||r.note||r.owner||r.date) && !confirm("Remove this row?")) return;
     pushUndo();
     state.nextRows = state.nextRows.filter(function(x){return x.id!==id;});
+    saveData(); render();
+  }
+  function addGrowthRow(){ pushUndo(); state.growthPlays.push({id:uid("g"),action:"",accountable:"",support:"",escalation:""}); saveData(); render(); }
+  function delGrowthRow(id){
+    var g=gpById(id); if(!g) return;
+    if((g.action||g.accountable||g.support||g.escalation) && !confirm("Remove this row?")) return;
+    pushUndo();
+    state.growthPlays = state.growthPlays.filter(function(x){return x.id!==id;});
     saveData(); render();
   }
   function toggleFriction(id){
@@ -1080,6 +1138,8 @@
       case "flag": setFlag(b.getAttribute("data-key"), b.getAttribute("data-status")); break;
       case "add-next": addNextRow(); break;
       case "del-next": delNextRow(b.getAttribute("data-id")); break;
+      case "add-growth": addGrowthRow(); break;
+      case "del-growth": delGrowthRow(b.getAttribute("data-id")); break;
       case "friction": toggleFriction(b.getAttribute("data-id")); break;
       case "set-acc": setAcc(b.getAttribute("data-area"), b.getAttribute("data-team")); break;
       case "add-area": addArea(); break;
