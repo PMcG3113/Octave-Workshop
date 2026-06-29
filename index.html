@@ -202,6 +202,12 @@
   table.deftable tbody tr:first-child td{border-top:0}
   table.deftable tbody tr:hover td{background:#fbfdfe}
   .deftable .c1in{display:flex;align-items:flex-start;gap:8px}
+  .draghandle{cursor:grab;color:var(--muted-text);user-select:none;font-size:16px;line-height:1.1;padding:1px 4px;flex:0 0 auto;border-radius:5px}
+  .draghandle:hover{color:var(--deep);background:rgba(2,13,23,.06)}
+  .draghandle:active{cursor:grabbing}
+  tr.dragging{opacity:.45}
+  tr.drop-above td{box-shadow:inset 0 2px 0 0 var(--cyan)}
+  tr.drop-below td{box-shadow:inset 0 -2px 0 0 var(--cyan)}
   .deftable .c1in .ed{flex:1;font-weight:700;color:var(--deep)}
   .deftable .rowdel{opacity:0;transition:opacity .12s;flex:0 0 auto}
   .deftable tr:hover .rowdel,.deftable .rowdel:focus-visible{opacity:1}
@@ -508,6 +514,7 @@
   var ROOM_ID = "octave-gtm-default";
   var FB = { on:false, root:null };
   var pendingRender = false;
+  var isDragging = false, dragId = null;
 
   var COLORS = {cyan:"#1FA7D2", amber:"#E0A23C", red:"#D0454A", green:"#2E9E6B", grey:"#9AA7B4", black:"#1B1B1B"};
   // AA-safe variants used when a swatch colour is applied to TEXT (swatch fills keep brand hex above)
@@ -646,6 +653,7 @@
     renderGuarded();
   }
   function renderGuarded(){
+    if(isDragging){ pendingRender=true; return; } // don't re-render mid drag-reorder
     var a=document.activeElement;
     if(a && a.classList && a.classList.contains("ed")){ pendingRender=true; return; } // don't yank focus mid-edit
     render();
@@ -737,8 +745,10 @@
     h += '<div class="tablewrap"><table class="deftable"><colgroup><col style="width:27%"><col style="width:45%"><col style="width:28%"></colgroup>';
     h += '<thead><tr><th>Area / Process</th><th>Definitions</th><th>Accountable</th></tr></thead><tbody>';
     state.areas.forEach(function(a){
-      h += '<tr>';
-      h += '<td class="c1"><div class="c1in">'+ed(a.name,"area-name",a.id)+
+      h += '<tr data-rowid="'+a.id+'">';
+      h += '<td class="c1"><div class="c1in">'+
+             '<span class="draghandle" draggable="true" data-rowid="'+a.id+'" role="button" tabindex="0" title="Drag to reorder — or focus and press ↑ / ↓" aria-label="Reorder this row; press up or down arrow to move">⠿</span>'+
+             ed(a.name,"area-name",a.id)+
              '<button class="mini del rowdel" data-act="del-area" data-id="'+a.id+'" title="Remove area" aria-label="Remove area">✕</button></div></td>';
       h += '<td class="creveal">'+(rd ? ed(a.definition,"area-def",a.id) : masked("Definition"))+'</td>';
       h += '<td class="creveal cacc">'+(ra ? ed(a.accountable,"area-acc",a.id) : masked("Accountable"))+'</td>';
@@ -938,6 +948,25 @@
     state.areas.push({id:id,name:"New area",definition:"Describe this area…",accountable:"",accountableTeamId:"",friction:false});
     saveData(); render(); toast("Area added");
   }
+  function areaIdxById(id){ for(var i=0;i<state.areas.length;i++) if(state.areas[i].id===id) return i; return -1; }
+  function reorderAreas(fromId, toId, placeAfter){
+    if(!fromId || fromId===toId) return;
+    var from = areaIdxById(fromId); if(from<0) return;
+    pushUndo();
+    var moved = state.areas.splice(from,1)[0];
+    var to = areaIdxById(toId);
+    if(to<0){ state.areas.push(moved); } else { state.areas.splice(placeAfter?to+1:to, 0, moved); }
+    saveData(); render();
+  }
+  function moveAreaBy(id, delta){
+    var idx = areaIdxById(id); if(idx<0) return;
+    var ni = idx+delta; if(ni<0 || ni>=state.areas.length) return;
+    pushUndo();
+    var m = state.areas.splice(idx,1)[0];
+    state.areas.splice(ni,0,m);
+    saveData(); render();
+    var h = document.querySelector('.draghandle[data-rowid="'+id+'"]'); if(h) h.focus(); // keep focus on the moved row
+  }
   function delArea(id){
     var a = state.areas[areaIndex(id)]; if(!a) return;
     if(!confirm('Remove area "'+a.name+'"? You can Undo this.')) return;
@@ -1089,6 +1118,12 @@
       else if(e.key==="Escape"){ e.preventDefault(); el.dataset.cancel="1"; el.textContent=el.dataset.orig||""; el.blur(); }
       return;
     }
+    // keyboard reorder when a drag handle is focused
+    var dh = e.target.closest && e.target.closest(".draghandle");
+    if(dh){
+      if(e.key==="ArrowUp"){ e.preventDefault(); moveAreaBy(dh.getAttribute("data-rowid"), -1); return; }
+      if(e.key==="ArrowDown"){ e.preventDefault(); moveAreaBy(dh.getAttribute("data-rowid"), 1); return; }
+    }
     // arrow-key navigation inside the colour palette (APG menu pattern)
     var pal=$("#palette");
     if(pal.classList.contains("show") && e.target.closest && e.target.closest("#palette")){
@@ -1156,6 +1191,35 @@
     }
     if(act!=="palette") { /* keep palette open only for its own button */ }
   });
+
+  // drag-to-reorder (Best Practice rows)
+  function clearDropMarks(){ var m=document.querySelectorAll("tr.drop-above,tr.drop-below"); for(var i=0;i<m.length;i++){ m[i].classList.remove("drop-above","drop-below"); } }
+  function endDrag(){
+    isDragging=false; dragId=null; clearDropMarks();
+    var d=document.querySelector("tr.dragging"); if(d) d.classList.remove("dragging");
+    if(pendingRender){ pendingRender=false; render(); }
+  }
+  document.addEventListener("dragstart", function(e){
+    var h=e.target.closest && e.target.closest(".draghandle"); if(!h) return;
+    var tr=h.closest("tr"); if(!tr) return;
+    dragId=h.getAttribute("data-rowid"); isDragging=true; tr.classList.add("dragging");
+    try{ e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/plain", dragId); if(e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(tr, 20, 16); }catch(_){}
+  });
+  document.addEventListener("dragover", function(e){
+    if(!isDragging) return;
+    var tr=e.target.closest && e.target.closest("tr[data-rowid]"); if(!tr) return;
+    e.preventDefault(); try{ e.dataTransfer.dropEffect="move"; }catch(_){}
+    var r=tr.getBoundingClientRect(), below=(e.clientY-r.top)>r.height/2;
+    clearDropMarks(); if(tr.getAttribute("data-rowid")!==dragId) tr.classList.add(below?"drop-below":"drop-above");
+  });
+  document.addEventListener("drop", function(e){
+    if(!isDragging) return;
+    var tr=e.target.closest && e.target.closest("tr[data-rowid]");
+    e.preventDefault();
+    if(tr){ var r=tr.getBoundingClientRect(), below=(e.clientY-r.top)>r.height/2; reorderAreas(dragId, tr.getAttribute("data-rowid"), below); }
+    endDrag();
+  });
+  document.addEventListener("dragend", endDrag);
 
   window.addEventListener("resize", closePalette);
   window.addEventListener("scroll", function(){ if($("#palette").classList.contains("show")) closePalette(); }, true);
