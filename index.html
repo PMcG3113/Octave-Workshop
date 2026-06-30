@@ -149,6 +149,8 @@
   .ed:hover{background:rgba(31,167,210,.10);box-shadow:inset 0 -2px 0 rgba(31,167,210,.45)}
   .ed:focus{background:#fff;box-shadow:0 0 0 2px var(--cyan)}
   .ed:empty::before{content:"—";color:var(--muted-text)}
+  /* multi-line note fields: grow downward + honour Enter line breaks (bullets) */
+  .ed[data-edit="aw-notes"],.ed[data-edit="aws-notes"],.ed[data-edit="next-note"],.ed[data-edit="growth-support"]{white-space:pre-wrap;line-height:1.5}
 
   .mini{
     appearance:none;border:0;background:transparent;cursor:pointer;color:var(--muted-text);
@@ -212,7 +214,7 @@
   .deftable .rowdel{opacity:0;transition:opacity .12s;flex:0 0 auto}
   .deftable tr:hover .rowdel,.deftable .rowdel:focus-visible{opacity:1}
   .deftable .creveal .ed{color:#3f4b57}
-  .deftable .cacc .ed{font-weight:700;color:var(--cyan)}
+  .deftable .cacc .ed{font-weight:700;color:var(--cyan-text)}
   .masked{display:inline-block;width:74%;min-width:120px;height:16px;border-radius:8px;background:#e3e9ee;vertical-align:middle}
 
   /* team-view flag buttons + notes */
@@ -234,6 +236,40 @@
   .growthtable td.growthact{text-align:center}
   .growthtable .growthact .mini{opacity:0;transition:opacity .12s}
   .growthtable tr:hover .growthact .mini,.growthtable .growthact .mini:focus-visible{opacity:1}
+
+  /* awareness process — expandable sections + sub-items */
+  .awtable td{vertical-align:top}
+  .awtable tr.awgroup > td{background:#eef3f6;border-top:2px solid var(--line)}
+  .awtable tbody tr.awgroup:first-child > td{border-top:0}
+  .awtitle-in{display:flex;align-items:flex-start;gap:8px}
+  .awtoggle{appearance:none;border:0;background:transparent;cursor:pointer;color:var(--deep);font-size:13px;line-height:1.5;padding:0 2px;flex:0 0 auto;border-radius:4px}
+  .awtoggle:hover{background:rgba(2,13,23,.07)}
+  .awtitle-text{flex:1;min-width:0}
+  .awname{font-weight:800;color:var(--deep);font-size:16px}
+  .awname .ed{font-weight:800}
+  .awdef{display:block;color:var(--muted-text);font-size:13px;line-height:1.4;margin-top:3px}
+  .awgroupdel,.awsubdel{opacity:0;transition:opacity .12s;flex:0 0 auto}
+  .awtable tr:hover .awgroupdel,.awtable tr:hover .awsubdel,.awgroupdel:focus-visible,.awsubdel:focus-visible{opacity:1}
+  .awsubtitle{padding-left:34px}
+  .awsub-in{display:flex;align-items:flex-start;gap:8px}
+  .awsubname{flex:1;font-weight:600;color:#3f4b57;font-size:15px}
+  .awsubname .ed{display:block;min-height:20px}
+  .awsubname .ed:empty::before{content:"Name this sub-item…";color:var(--muted-text);font-weight:400}
+  .awtable tr.awaddsub td{padding:6px 16px 10px 34px;background:#fafcfd}
+  .awsubadd{appearance:none;border:1px dashed var(--line);background:#fff;color:var(--muted-text);font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:14px;cursor:pointer}
+  .awsubadd:hover{border-color:var(--cyan);border-style:solid;color:var(--cyan-text)}
+  .awtable td.notecell .ed:empty::before{content:"Notes…";color:var(--muted-text)}
+  .awtable td.cacc .ed{display:block;min-height:20px;color:var(--deep);font-weight:700}
+  .awtable td.cacc .ed:empty::before{content:"Add org…";color:var(--muted-text);font-weight:400}
+  /* per-row reveal in the Accountable column */
+  .revealbtn{appearance:none;border:1px solid var(--line);background:#fff;color:var(--deep);font-size:12.5px;font-weight:700;padding:5px 14px;border-radius:16px;cursor:pointer}
+  .revealbtn:hover{border-color:var(--cyan);background:rgba(31,167,210,.08);color:var(--cyan-text)}
+  .accrevealed{display:flex;align-items:flex-start;gap:8px}
+  .accrevealed .ed{flex:1}
+  .awhide{appearance:none;border:0;background:transparent;color:var(--muted-text);font-size:11px;font-weight:700;cursor:pointer;padding:2px 5px;border-radius:5px;opacity:0;transition:opacity .12s;flex:0 0 auto}
+  .awtable tr:hover .awhide,.awhide:focus-visible{opacity:1}
+  .awtable td.ccontrib .ed{display:block;min-height:20px;color:#3f4b57}
+  .awtable td.ccontrib .ed:empty::before{content:"Add team names…";color:var(--muted-text)}
 
   /* ===== Team view ===== */
   .teamswitch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
@@ -395,6 +431,9 @@
     /* let wide tables paginate / shrink-to-fit instead of clipping */
     .tablewrap{overflow:visible !important;border:0 !important}
     table.deftable{min-width:0 !important}
+    table.deftable thead th{color:#000 !important;background:#eee !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    table.deftable tr.awgroup > td{background:#eef3f6 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .arow,.trow,.nrow,.awtable tr,.growthtable tr{break-inside:avoid}
     .matrix-wrap{overflow:visible !important;border:0 !important}
     table.matrix{min-width:0 !important;width:100% !important;table-layout:fixed;font-size:10px}
     table.matrix th,table.matrix td{padding:5px 6px;word-break:break-word;overflow-wrap:anywhere}
@@ -435,11 +474,9 @@
   </div>
 
   <nav class="tabs noprint" id="tabs" aria-label="Workshop steps">
-    <button data-act="view" data-view="definitions"><span class="step">1</span>Best Practice</button>
-    <button data-act="view" data-view="team"><span class="step">2</span>Team View</button>
-    <button data-act="view" data-view="master"><span class="step">3</span>Master Matrix</button>
-    <button data-act="view" data-view="next"><span class="step">4</span>What's Next</button>
-    <button data-act="view" data-view="growth"><span class="step">5</span>Growth Plays</button>
+    <button data-act="view" data-view="definitions"><span class="step">1</span>Awareness Process</button>
+    <button data-act="view" data-view="next"><span class="step">2</span>What's Next</button>
+    <button data-act="view" data-view="growth"><span class="step">3</span>Growth Plays</button>
   </nav>
 
   <div class="toolbar noprint">
@@ -457,12 +494,12 @@
 <main>
   <div class="hint noprint" id="hint" style="display:none">
     <div>
-      <b>How to run this.</b> Move left&nbsp;→&nbsp;right through the five steps.
+      <b>How to run this.</b> Move left&nbsp;→&nbsp;right through the three steps.
       <b>Click any text to edit it</b> (<kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels).
-      Use the <b>◯ dot</b> to flag a cell <em>"discuss this"</em>. Use the <b>◑</b> swatch to recolour text
-      (cyan / amber / red / green / grey / black) so you can mark something live.
-      Add or remove rows&nbsp;&amp;&nbsp;teams with <b>＋</b> and <b>×</b>. Everything saves automatically;
-      <b>Undo</b> reverses the last delete or reset.
+      On <b>Awareness Process</b>, click a section's <b>▾</b> arrow to show or hide its sub-items, type into
+      <b>Notes</b> as people talk, and fill in <b>Accountable</b> and <b>Contributors</b>.
+      Use the <b>＋ Add</b> buttons to add sections or sub-items, and <b>×</b> to remove.
+      Everything saves automatically and syncs live; <b>Undo</b> reverses the last delete or reset.
     </div>
     <button class="mini x" data-act="toggle-hint" aria-label="Hide help">✕</button>
   </div>
@@ -515,6 +552,7 @@
   var FB = { on:false, root:null };
   var pendingRender = false;
   var isDragging = false, dragId = null;
+  var MULTILINE = {"aw-notes":1,"aws-notes":1,"next-note":1,"growth-support":1}; // fields where Enter adds a new line (bullets)
 
   var COLORS = {cyan:"#1FA7D2", amber:"#E0A23C", red:"#D0454A", green:"#2E9E6B", grey:"#9AA7B4", black:"#1B1B1B"};
   // AA-safe variants used when a swatch colour is applied to TEXT (swatch fills keep brand hex above)
@@ -522,11 +560,11 @@
   var COLOR_ORDER = ["cyan","amber","red","green","grey","black"];
 
   var VIEWS = {
-    definitions:{title:"WbD Best Practice"},
-    team:{title:"2 · Team View"},
-    master:{title:"3 · Master Matrix"},
-    next:{title:"4 · What's Next"},
-    growth:{title:"5 · Growth Plays"}
+    definitions:{title:"Awareness Process Best Practice"},
+    team:{title:"Team View"},
+    master:{title:"Master Matrix"},
+    next:{title:"2 · What's Next"},
+    growth:{title:"3 · Growth Plays"}
   };
 
   /* ---------------- seed data ---------------- */
@@ -576,7 +614,14 @@
         "Deal Registration & Performance Tracking",
         "Orchestration & ELT Reporting"
       ].map(function(a,i){ return {id:"g"+(i+1), action:a, accountable:"", support:"", escalation:""}; }),
-      ui:{view:"definitions", revealDefs:false, revealAcc:false, dampen:true, team:"t_prod", hint:false}
+      awareness:[
+        {id:"aw1", title:"Strategy", def:"Decide who we target and the plan to hit our business goals.", notes:"", accountable:"", contributors:"", revealed:false, subs:[]},
+        {id:"aw2", title:"Messaging and Content", def:"Create the messaging and content that fuel programs and engage buyers.", notes:"", accountable:"", contributors:"", revealed:false, subs:[]},
+        {id:"aw3", title:"Create Demand", def:"Push that content across channels to build awareness and interest.", notes:"", accountable:"", contributors:"", revealed:false, subs:[]},
+        {id:"aw4", title:"Capture Demand", def:"Spot the accounts showing interest and hand them cleanly to sales.", notes:"", accountable:"", contributors:"", revealed:false, subs:[]},
+        {id:"aw5", title:"Enablement", def:"Give the field the info and resources to deliver a world-class experience.", notes:"", accountable:"", contributors:"", revealed:false, subs:[]}
+      ],
+      ui:{view:"definitions", revealDefs:false, revealAcc:false, dampen:true, team:"t_prod", hint:false, awOpen:{}}
     };
   }
 
@@ -592,8 +637,8 @@
      teams editing at the same time never clobber each other. */
   function persistUI(){ try{ localStorage.setItem(UI_KEY, JSON.stringify(state.ui)); }catch(e){} }
   function saveLocalAll(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
-  function dataPayload(){ return { teams:state.teams, areas:state.areas, flags:state.flags||{}, teamNotes:state.teamNotes||{}, nextRows:state.nextRows, growthPlays:state.growthPlays }; }
-  function saveData(){ persistUI(); if(FB.on){ FB.root.update({teams:state.teams, areas:state.areas, nextRows:state.nextRows, growthPlays:state.growthPlays}); } else { saveLocalAll(); } }
+  function dataPayload(){ return { teams:state.teams, areas:state.areas, flags:state.flags||{}, teamNotes:state.teamNotes||{}, nextRows:state.nextRows, growthPlays:state.growthPlays, awareness:state.awareness }; }
+  function saveData(){ persistUI(); if(FB.on){ FB.root.update({teams:state.teams, areas:state.areas, nextRows:state.nextRows, growthPlays:state.growthPlays, awareness:state.awareness}); } else { saveLocalAll(); } }
   function saveAll(){ persistUI(); if(FB.on){ FB.root.update(dataPayload()); } else { saveLocalAll(); } }
   function saveFlag(key){ persistUI(); if(FB.on){ var v=state.flags[key]; if(v==null){ FB.root.child("flags/"+key).remove(); } else { FB.root.child("flags/"+key).set(v); } } else { saveLocalAll(); } }
   function saveNote(key){ persistUI(); if(FB.on){ var v=state.teamNotes[key]; if(!v){ FB.root.child("teamNotes/"+key).remove(); } else { FB.root.child("teamNotes/"+key).set(v); } } else { saveLocalAll(); } }
@@ -608,6 +653,7 @@
       s.flags = s.flags||{}; s.colors = s.colors||{}; s.teamNotes = s.teamNotes||{};
       s.nextRows = (s.nextRows && s.nextRows.length) ? s.nextRows : seed().nextRows;
       s.growthPlays = (s.growthPlays && s.growthPlays.length) ? s.growthPlays : seed().growthPlays;
+      s.awareness = (s.awareness && s.awareness.length) ? s.awareness : seed().awareness;
       // migration: the original "RevOps" team slot is now "Marketing" (preserves existing data)
       var migrated=false;
       s.teams.forEach(function(t){ if(t.id==="t_revops"){ t.id="t_mktg"; if(t.name==="RevOps") t.name="Marketing"; migrated=true; } });
@@ -628,7 +674,10 @@
   function pushUndo(){ undoStack.push(clone(state)); if(undoStack.length>60) undoStack.shift(); }
   function doUndo(){
     if(!undoStack.length) return;
-    state = undoStack.pop(); saveAll(); render(); toast("Undone");
+    var keepUi = state.ui;           // preserve this device's local view (current tab + awOpen collapse map)
+    state = undoStack.pop();
+    state.ui = keepUi;
+    saveAll(); render(); toast("Undone");
   }
 
   state = load() || seed();
@@ -649,6 +698,7 @@
     state.teamNotes = d.teamNotes || {};
     if(d.nextRows) state.nextRows = d.nextRows;
     if(d.growthPlays) state.growthPlays = d.growthPlays;
+    if(d.awareness) state.awareness = d.awareness;
     if(!state.teams.some(function(t){return t.id===state.ui.team;})) state.ui.team = state.teams[0] && state.teams[0].id;
     renderGuarded();
   }
@@ -673,7 +723,10 @@
       .then(function(snap){
         FB.on = true;
         if(!snap.exists()){ FB.root.set(dataPayload()); } // first person seeds the shared room
-        else if(!snap.child("growthPlays").exists()){ FB.root.child("growthPlays").set(state.growthPlays || seed().growthPlays); } // add Growth Plays to an existing room
+        else { // add newer sections to an already-existing room
+          if(!snap.child("growthPlays").exists()){ FB.root.child("growthPlays").set(state.growthPlays || seed().growthPlays); }
+          if(!snap.child("awareness").exists()){ FB.root.child("awareness").set(state.awareness || seed().awareness); }
+        }
         FB.root.on("value", onRemote);
       })
       .catch(function(){ FB.on=false; setConn("error"); toast("Multi-user unavailable — using this device only"); });
@@ -724,38 +777,51 @@
 
   /* ---------------- view tools (toolbar middle) ---------------- */
   function renderViewTools(){
-    var v = state.ui.view, h = "";
-    if(v==="definitions"){
-      h = '<label class="switch"><input type="checkbox" data-act="toggle-revealdefs" '+(state.ui.revealDefs?"checked":"")+'><span class="track"></span>Reveal definitions</label>'+
-          '<label class="switch"><input type="checkbox" data-act="toggle-revealacc" '+(state.ui.revealAcc?"checked":"")+'><span class="track"></span>Reveal accountable</label>';
-    } else if(v==="master"){
-      h = '<button class="btn" data-act="add-area"><span class="ic">＋</span>Add area</button>'+
-          '<button class="btn" data-act="add-team"><span class="ic">＋</span>Add team</button>';
-    }
-    $("#viewtools").innerHTML = h;
+    $("#viewtools").innerHTML = ""; // per-view actions now live in-page (Add buttons)
   }
 
-  /* ---------------- WbD Best Practice (step 1) — 3-column reveal table ---------------- */
-  function masked(label){
-    return '<span class="masked" role="img" aria-label="'+esc(label)+' hidden — toggle reveal to show" title="Hidden — toggle reveal to show"></span>';
+  /* ---------------- Awareness Process — expandable sections + sub-items ---------------- */
+  function isAwOpen(id){ return !(state.ui.awOpen && state.ui.awOpen[id]===false); }
+  // Accountable column: hidden behind a per-row Reveal until clicked (then editable, Deep Blue bold)
+  function accCell(item, accType){
+    if(item.revealed){
+      return '<div class="accrevealed">'+ed(item.accountable||"", accType, item.id)+
+             '<button class="awhide" data-act="aw-reveal" data-id="'+esc(item.id)+'" title="Hide again" aria-label="Hide accountable again">Hide</button></div>';
+    }
+    return '<button class="revealbtn" data-act="aw-reveal" data-id="'+esc(item.id)+'" title="Reveal best practice accountable" aria-label="Reveal best practice accountable">Best Practice</button>';
   }
   function renderDefinitions(){
-    var rd = state.ui.revealDefs, ra = state.ui.revealAcc;
     var h = '<div class="vhead"><h1>'+esc(VIEWS.definitions.title)+'</h1></div>';
-    h += '<div class="tablewrap"><table class="deftable"><colgroup><col style="width:27%"><col style="width:45%"><col style="width:28%"></colgroup>';
-    h += '<thead><tr><th>Area / Process</th><th>Definitions</th><th>Accountable</th></tr></thead><tbody>';
-    state.areas.forEach(function(a){
-      h += '<tr data-rowid="'+a.id+'">';
-      h += '<td class="c1"><div class="c1in">'+
-             '<span class="draghandle" draggable="true" data-rowid="'+a.id+'" role="button" tabindex="0" title="Drag to reorder — or focus and press ↑ / ↓" aria-label="Reorder this row; press up or down arrow to move">⠿</span>'+
-             ed(a.name,"area-name",a.id)+
-             '<button class="mini del rowdel" data-act="del-area" data-id="'+a.id+'" title="Remove area" aria-label="Remove area">✕</button></div></td>';
-      h += '<td class="creveal">'+(rd ? ed(a.definition,"area-def",a.id) : masked("Definition"))+'</td>';
-      h += '<td class="creveal cacc">'+(ra ? ed(a.accountable,"area-acc",a.id) : masked("Accountable"))+'</td>';
+    h += '<div class="tablewrap"><table class="deftable awtable"><colgroup><col style="width:34%"><col style="width:30%"><col style="width:17%"><col style="width:19%"></colgroup>';
+    h += '<thead><tr><th>Area / Process</th><th>Notes</th><th>Accountable</th><th>Contributors</th></tr></thead><tbody>';
+    state.awareness.forEach(function(g){
+      var open = isAwOpen(g.id);
+      h += '<tr class="awgroup">';
+      h += '<td class="awtitle"><div class="awtitle-in">'+
+             '<button class="awtoggle" data-act="aw-toggle" data-id="'+g.id+'" aria-expanded="'+open+'" aria-label="'+(open?"Collapse":"Expand")+' section" title="'+(open?"Collapse":"Expand")+'">'+(open?"▾":"▸")+'</button>'+
+             '<div class="awtitle-text"><span class="awname">'+ed(g.title,"aw-title",g.id)+'</span>'+
+               '<span class="awdef">'+ed(g.def,"aw-def",g.id)+'</span></div>'+
+             '<button class="mini del awgroupdel" data-act="aw-del-group" data-id="'+g.id+'" title="Remove section" aria-label="Remove section">✕</button>'+
+           '</div></td>';
+      h += '<td class="notecell">'+ed(g.notes||"","aw-notes",g.id)+'</td>';
+      h += '<td class="cacc">'+accCell(g,"aw-acc")+'</td>';
+      h += '<td class="ccontrib">'+ed(g.contributors||"","aw-contrib",g.id)+'</td>';
       h += '</tr>';
+      if(open){
+        (g.subs||[]).forEach(function(s){
+          h += '<tr class="awsub">';
+          h += '<td class="awsubtitle"><div class="awsub-in"><span class="awsubname">'+ed(s.title,"aws-title",s.id)+'</span>'+
+                 '<button class="mini del awsubdel" data-act="aw-del-sub" data-id="'+s.id+'" title="Remove sub-item" aria-label="Remove sub-item">✕</button></div></td>';
+          h += '<td class="notecell">'+ed(s.notes||"","aws-notes",s.id)+'</td>';
+          h += '<td class="cacc">'+accCell(s,"aws-acc")+'</td>';
+          h += '<td class="ccontrib">'+ed(s.contributors||"","aws-contrib",s.id)+'</td>';
+          h += '</tr>';
+        });
+        h += '<tr class="awaddsub"><td colspan="4"><button class="awsubadd" data-act="aw-add-sub" data-id="'+g.id+'">＋ Add sub-item</button></td></tr>';
+      }
     });
     h += '</tbody></table></div>';
-    h += '<div class="addbar noprint"><button class="btn" data-act="add-area"><span class="ic">＋</span>Add area / process</button></div>';
+    h += '<div class="addbar noprint"><button class="btn" data-act="aw-add-group"><span class="ic">＋</span>Add title</button></div>';
     return h;
   }
 
@@ -886,7 +952,7 @@
 
   /* ---------------- master render dispatch ---------------- */
   function render(){
-    if(state.ui.view==="best") state.ui.view="definitions"; // legacy view id, tab removed
+    if(state.ui.view==="best"||state.ui.view==="team"||state.ui.view==="master") state.ui.view="definitions"; // removed views redirect to Awareness Process
     // tabs
     var tabs = document.querySelectorAll("#tabs button");
     for(var i=0;i<tabs.length;i++){
@@ -899,9 +965,7 @@
     $("#undoBtn").disabled = undoStack.length===0;
 
     var root = $("#view-root"), v = state.ui.view, html="";
-    if(v==="team")        html = renderTeam();
-    else if(v==="master") html = renderMaster();
-    else if(v==="next")   html = renderNext();
+    if(v==="next")        html = renderNext();
     else if(v==="growth") html = renderGrowth();
     else                  html = renderDefinitions();
     root.innerHTML = html;
@@ -923,8 +987,19 @@
     else if(type==="growth-acc"){ var g2=gpById(id); if(g2) g2.accountable=val; saveData(); }
     else if(type==="growth-support"){ var g3=gpById(id); if(g3) g3.support=val; saveData(); }
     else if(type==="growth-escalation"){ var g4=gpById(id); if(g4) g4.escalation=val; saveData(); }
+    else if(type==="aw-title"){ var aw=awGroupById(id); if(aw) aw.title=val; saveData(); }
+    else if(type==="aw-def"){ var aw2=awGroupById(id); if(aw2) aw2.def=val; saveData(); }
+    else if(type==="aw-notes"){ var aw3=awGroupById(id); if(aw3) aw3.notes=val; saveData(); }
+    else if(type==="aw-acc"){ var aw4=awGroupById(id); if(aw4) aw4.accountable=val; saveData(); }
+    else if(type==="aw-contrib"){ var aw5=awGroupById(id); if(aw5) aw5.contributors=val; saveData(); }
+    else if(type==="aws-title"){ var as1=awSubById(id); if(as1) as1.title=val; saveData(); }
+    else if(type==="aws-notes"){ var as2=awSubById(id); if(as2) as2.notes=val; saveData(); }
+    else if(type==="aws-acc"){ var as3=awSubById(id); if(as3) as3.accountable=val; saveData(); }
+    else if(type==="aws-contrib"){ var as4=awSubById(id); if(as4) as4.contributors=val; saveData(); }
   }
   function gpById(id){ for(var i=0;i<state.growthPlays.length;i++) if(state.growthPlays[i].id===id) return state.growthPlays[i]; return null; }
+  function awGroupById(id){ for(var i=0;i<state.awareness.length;i++) if(state.awareness[i].id===id) return state.awareness[i]; return null; }
+  function awSubById(id){ for(var i=0;i<state.awareness.length;i++){ var subs=state.awareness[i].subs||[]; for(var j=0;j<subs.length;j++) if(subs[j].id===id) return subs[j]; } return null; }
   function nextRowById(id){ for(var i=0;i<state.nextRows.length;i++) if(state.nextRows[i].id===id) return state.nextRows[i]; return null; }
   function matchTeam(label){
     if(!label) return null;
@@ -1036,6 +1111,38 @@
     var a = state.areas[areaIndex(id)];
     if(a){ a.friction = !a.friction; saveData(); render(); }
   }
+  /* ---- Awareness Process sections / sub-items ---- */
+  function toggleAwOpen(id){ if(!state.ui.awOpen) state.ui.awOpen={}; state.ui.awOpen[id] = !isAwOpen(id); persistUI(); render(); }
+  function toggleAwReveal(id){ var it = awGroupById(id) || awSubById(id); if(it){ it.revealed = !it.revealed; saveData(); render(); } } // shared: reveals for everyone
+  function addAwGroup(){ pushUndo(); state.awareness.push({id:uid("aw"),title:"New section",def:"Describe this section…",notes:"",accountable:"",contributors:"",revealed:false,subs:[]}); saveData(); render(); }
+  function delAwGroup(id){
+    var g=awGroupById(id); if(!g) return;
+    if(!confirm('Remove section "'+(g.title||"")+'" and its sub-items? You can Undo this.')) return;
+    pushUndo();
+    state.awareness = state.awareness.filter(function(x){return x.id!==id;});
+    if(state.ui.awOpen) delete state.ui.awOpen[id]; // drop stale per-device collapse entry
+    saveData(); render();
+  }
+  function addAwSub(groupId){
+    var g=awGroupById(groupId); if(!g) return;
+    pushUndo();
+    if(!g.subs) g.subs=[];
+    g.subs.push({id:uid("aws"),title:"",notes:"",accountable:"",contributors:"",revealed:false});
+    if(state.ui.awOpen) delete state.ui.awOpen[groupId]; // ensure the section is open so the new item shows
+    saveData(); render();
+  }
+  function delAwSub(id){
+    for(var i=0;i<state.awareness.length;i++){
+      var subs=state.awareness[i].subs||[];
+      for(var j=0;j<subs.length;j++){
+        if(subs[j].id===id){
+          var s=subs[j];
+          if((s.title||s.notes||s.accountable||s.contributors) && !confirm("Remove this sub-item?")) return;
+          pushUndo(); subs.splice(j,1); saveData(); render(); return;
+        }
+      }
+    }
+  }
 
   /* ---------------- palette ---------------- */
   var palKey=null, palTrigger=null;
@@ -1107,6 +1214,14 @@
   var root = $("#view-root");
 
   // inline editing
+  function insertNewline(){
+    var sel = window.getSelection(); if(!sel || !sel.rangeCount) return;
+    var range = sel.getRangeAt(0); range.deleteContents();
+    var tn = document.createTextNode("\n");
+    range.insertNode(tn);
+    range.setStartAfter(tn); range.collapse(true);
+    sel.removeAllRanges(); sel.addRange(range);
+  }
   document.addEventListener("focusin", function(e){
     var el = e.target.closest && e.target.closest(".ed");
     if(el){ el.dataset.orig = el.textContent; delete el.dataset.cancel; }
@@ -1114,7 +1229,10 @@
   document.addEventListener("keydown", function(e){
     var el = e.target.closest && e.target.closest(".ed");
     if(el){
-      if(e.key==="Enter"){ e.preventDefault(); el.blur(); }
+      if(e.key==="Enter"){
+        if(MULTILINE[el.dataset.edit] && !e.shiftKey){ e.preventDefault(); insertNewline(); } // Enter = new line (bullets); click away or Shift+Enter to finish
+        else { e.preventDefault(); el.blur(); }
+      }
       else if(e.key==="Escape"){ e.preventDefault(); el.dataset.cancel="1"; el.textContent=el.dataset.orig||""; el.blur(); }
       return;
     }
@@ -1138,15 +1256,20 @@
     if(!el) return;
     var flush = function(){ if(pendingRender){ pendingRender=false; render(); } }; // apply any remote update that arrived mid-edit
     if(el.dataset.cancel){ delete el.dataset.cancel; flush(); return; }
-    var val = el.textContent.replace(/\s+/g," ").trim();
-    if(val===(el.dataset.orig||"").replace(/\s+/g," ").trim()){ flush(); return; } // no change
+    var ml = !!MULTILINE[el.dataset.edit];
+    var norm = function(s){ s=String(s||"").replace(/ /g," "); return ml ? s.replace(/[ \t]+\n/g,"\n").replace(/\s+$/,"") : s.replace(/\s+/g," ").trim(); };
+    var val = norm(el.textContent);
+    if(val===norm(el.dataset.orig)){ flush(); return; } // no change
     // capture where focus is heading so we can restore it after the re-render destroys the DOM
     var nextEd = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".ed");
     var nextSel = nextEd ? '[data-edit="'+nextEd.dataset.edit+'"][data-id="'+nextEd.dataset.id+'"]' : null;
+    var toAct = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest("[data-act]");
     applyEdit(el.dataset.edit, el.dataset.id, val);
     pendingRender=false;
-    render();
-    if(nextSel){ var t=document.querySelector(nextSel); if(t){ t.focus(); } }
+    var doRender = function(){ render(); if(nextSel){ var t=document.querySelector(nextSel); if(t){ t.focus(); } } };
+    // if focus is moving to an action button (Add/Delete), let its click fire before we rebuild
+    // #view-root — otherwise innerHTML replacement destroys the button between mousedown and mouseup
+    if(toAct){ setTimeout(doRender, 0); } else { doRender(); }
   });
 
   // date inputs (and any future inputs)
@@ -1175,6 +1298,12 @@
       case "del-next": delNextRow(b.getAttribute("data-id")); break;
       case "add-growth": addGrowthRow(); break;
       case "del-growth": delGrowthRow(b.getAttribute("data-id")); break;
+      case "aw-toggle": toggleAwOpen(b.getAttribute("data-id")); break;
+      case "aw-reveal": toggleAwReveal(b.getAttribute("data-id")); break;
+      case "aw-add-group": addAwGroup(); break;
+      case "aw-del-group": delAwGroup(b.getAttribute("data-id")); break;
+      case "aw-add-sub": addAwSub(b.getAttribute("data-id")); break;
+      case "aw-del-sub": delAwSub(b.getAttribute("data-id")); break;
       case "friction": toggleFriction(b.getAttribute("data-id")); break;
       case "set-acc": setAcc(b.getAttribute("data-area"), b.getAttribute("data-team")); break;
       case "add-area": addArea(); break;
