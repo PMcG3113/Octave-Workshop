@@ -250,12 +250,12 @@
   .awdef{display:block;color:var(--muted-text);font-size:13px;line-height:1.4;margin-top:3px}
   .awgroupdel,.awsubdel{opacity:0;transition:opacity .12s;flex:0 0 auto}
   .awtable tr:hover .awgroupdel,.awtable tr:hover .awsubdel,.awgroupdel:focus-visible,.awsubdel:focus-visible{opacity:1}
-  .awsubtitle{padding-left:34px}
+  .awtable td.awsubtitle{padding-left:60px}
   .awsub-in{display:flex;align-items:flex-start;gap:8px}
   .awsubname{flex:1;font-weight:600;color:#3f4b57;font-size:15px}
   .awsubname .ed{display:block;min-height:20px}
   .awsubname .ed:empty::before{content:"Name this sub-item…";color:var(--muted-text);font-weight:400}
-  .awtable tr.awaddsub td{padding:6px 16px 10px 34px;background:#fafcfd}
+  .awtable tr.awaddsub td{padding:6px 16px 10px 60px;background:#fafcfd}
   .awsubadd{appearance:none;border:1px dashed var(--line);background:#fff;color:var(--muted-text);font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:14px;cursor:pointer}
   .awsubadd:hover{border-color:var(--cyan);border-style:solid;color:var(--cyan-text)}
   .awtable td.notecell .ed:empty::before{content:"Notes…";color:var(--muted-text)}
@@ -804,7 +804,7 @@
              '<button class="mini del awgroupdel" data-act="aw-del-group" data-id="'+g.id+'" title="Remove section" aria-label="Remove section">✕</button>'+
            '</div></td>';
       h += '<td class="notecell">'+ed(g.notes||"","aw-notes",g.id)+'</td>';
-      h += '<td class="cacc">'+accCell(g,"aw-acc")+'</td>';
+      h += '<td class="cacc"></td>';
       h += '<td class="ccontrib">'+ed(g.contributors||"","aw-contrib",g.id)+'</td>';
       h += '</tr>';
       if(open){
